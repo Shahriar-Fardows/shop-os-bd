@@ -24,3 +24,10 @@ body {
 .auth-card {
   box-shadow: 0 20px 40px -15px rgba(30, 107, 214, 0.1);
 }
+
+@layer base {
+  button {
+    font-size: 14px;
+  }
+}
+

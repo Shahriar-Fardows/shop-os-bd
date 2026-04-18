@@ -123,7 +123,7 @@ export default function ClientRegister() {
 
           <button 
             type="submit" 
-            className="w-full bg-brand text-white rounded-lg py-3 font-bold text-base flex items-center justify-center gap-3 hover:bg-brand-hover transition-all shadow-xl shadow-blue-50 mt-6 active:scale-[0.98]"
+            className="w-full bg-brand text-white rounded-lg py-3 font-bold text-sm flex items-center justify-center gap-3 hover:bg-brand-hover transition-all shadow-xl shadow-blue-50 mt-6 active:scale-[0.98]"
           >
             Create Account <FiArrowRight size={20} />
           </button>

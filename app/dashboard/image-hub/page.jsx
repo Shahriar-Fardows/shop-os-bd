@@ -235,7 +235,7 @@ export default function ImageHubPage() {
                     />
                 </div>
                 <div className="flex gap-2 w-full md:w-auto">
-                    <button className="flex-1 md:flex-none px-4 py-3 bg-gray-50 text-gray-400 rounded-lg hover:bg-gray-100 transition-all font-bold text-xs uppercase flex items-center gap-2 justify-center">
+                    <button className="flex-1 md:flex-none px-4 py-3 bg-gray-50 text-gray-400 rounded-lg hover:bg-gray-100 transition-all font-bold text-sm uppercase flex items-center gap-2 justify-center">
                         <FiFilter /> Filter
                     </button>
                 </div>

@@ -118,7 +118,7 @@ const InventoryList = () => {
                                 <td className="px-8 py-5 text-center">
                                     <button 
                                         onClick={() => handleOpenLink(item.url, item.name)}
-                                        className="text-xs font-black text-white px-6 py-2.5 rounded-lg bg-[#1e6bd6] shadow-md shadow-blue-50 hover:opacity-90 transition-all active:scale-95 uppercase tracking-widest"
+                                        className="text-sm font-black text-white px-6 py-2.5 rounded-lg bg-[#1e6bd6] shadow-md shadow-blue-50 hover:opacity-90 transition-all active:scale-95 uppercase tracking-widest"
                                     >
                                         Visit Website
                                     </button>

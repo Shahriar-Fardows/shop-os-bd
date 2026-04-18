@@ -1,5 +1,5 @@
 "use client";
-import { FiHome, FiBox, FiHelpCircle, FiUser, FiLogOut, FiLink, FiDollarSign, FiImage, FiCreditCard, FiScissors } from 'react-icons/fi';
+import { FiHome, FiBox, FiHelpCircle, FiUser, FiLogOut, FiLink, FiDollarSign, FiImage, FiCreditCard, FiScissors, FiFileText, FiGrid, FiFile, FiMail } from 'react-icons/fi';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
@@ -102,16 +102,60 @@ const Sidebar = ({ handleLogout }) => {
                         <FiCreditCard size={20} className={pathname === '/dashboard/nid-printer' ? 'text-[#1e6bd6]' : 'text-gray-400'} />
                         <span>NID Printer</span>
                     </Link>
-                    <Link 
+                    <Link
                         href="/dashboard/image-edit"
                         className={`flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm transition-all ${
-                            pathname === '/dashboard/image-edit' 
-                            ? 'bg-blue-50 text-[#1e6bd6] font-bold shadow-sm shadow-blue-50' 
+                            pathname === '/dashboard/image-edit'
+                            ? 'bg-blue-50 text-[#1e6bd6] font-bold shadow-sm shadow-blue-50'
                             : 'text-gray-500 hover:bg-gray-50 font-medium'
                         }`}
                     >
                         <FiScissors size={20} className={pathname === '/dashboard/image-edit' ? 'text-[#1e6bd6]' : 'text-gray-400'} />
                         <span>Image Editor (BG)</span>
+                    </Link>
+                    <Link
+                        href="/dashboard/cv-maker"
+                        className={`flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm transition-all ${
+                            pathname === '/dashboard/cv-maker'
+                            ? 'bg-blue-50 text-[#1e6bd6] font-bold shadow-sm shadow-blue-50'
+                            : 'text-gray-500 hover:bg-gray-50 font-medium'
+                        }`}
+                    >
+                        <FiFileText size={20} className={pathname === '/dashboard/cv-maker' ? 'text-[#1e6bd6]' : 'text-gray-400'} />
+                        <span>CV / Bio-Data Maker</span>
+                    </Link>
+                    <Link
+                        href="/dashboard/application-letter"
+                        className={`flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm transition-all ${
+                            pathname === '/dashboard/application-letter'
+                            ? 'bg-blue-50 text-[#1e6bd6] font-bold shadow-sm shadow-blue-50'
+                            : 'text-gray-500 hover:bg-gray-50 font-medium'
+                        }`}
+                    >
+                        <FiMail size={20} className={pathname === '/dashboard/application-letter' ? 'text-[#1e6bd6]' : 'text-gray-400'} />
+                        <span>Application Letter</span>
+                    </Link>
+                    <Link
+                        href="/dashboard/cash-memo"
+                        className={`flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm transition-all ${
+                            pathname === '/dashboard/cash-memo'
+                            ? 'bg-blue-50 text-[#1e6bd6] font-bold shadow-sm shadow-blue-50'
+                            : 'text-gray-500 hover:bg-gray-50 font-medium'
+                        }`}
+                    >
+                        <FiFile size={20} className={pathname === '/dashboard/cash-memo' ? 'text-[#1e6bd6]' : 'text-gray-400'} />
+                        <span>Cash Memo Maker</span>
+                    </Link>
+                    <Link
+                        href="/dashboard/qr-code"
+                        className={`flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm transition-all ${
+                            pathname === '/dashboard/qr-code'
+                            ? 'bg-blue-50 text-[#1e6bd6] font-bold shadow-sm shadow-blue-50'
+                            : 'text-gray-500 hover:bg-gray-50 font-medium'
+                        }`}
+                    >
+                        <FiGrid size={20} className={pathname === '/dashboard/qr-code' ? 'text-[#1e6bd6]' : 'text-gray-400'} />
+                        <span>QR Code Maker</span>
                     </Link>
                 </nav>
             </div>

@@ -50,10 +50,10 @@ export default function UnifiedBlueAccountsHub() {
                             <input type="number" class="item-price swal2-input !m-0 !w-1/4 !rounded-lg text-sm font-bold" placeholder="Price">
                         </div>
                     </div>
-                    <button type="button" onclick="document.getElementById('items-container').insertAdjacentHTML('beforeend', '<div class=\\'flex gap-2 mt-2 item-row\\'><input class=\\'item-name swal2-input !m-0 !w-3/4 !rounded-lg text-sm\\' placeholder=\\'Add Item\\' /><input type=\\'number\\' class=\\'item-price swal2-input !m-0 !w-1/4 !rounded-lg text-sm font-bold\\' placeholder=\\'Price\\' /></div>')" class="text-xs font-black text-brand uppercase mt-2 self-start hover:underline">+ Add More Line Item</button>
+                    <button type="button" onclick="document.getElementById('items-container').insertAdjacentHTML('beforeend', '<div class=\\'flex gap-2 mt-2 item-row\\'><input class=\\'item-name swal2-input !m-0 !w-3/4 !rounded-lg text-sm\\' placeholder=\\'Add Item\\' /><input type=\\'number\\' class=\\'item-price swal2-input !m-0 !w-1/4 !rounded-lg text-sm font-bold\\' placeholder=\\'Price\\' /></div>')" class="text-sm font-black text-brand uppercase mt-2 self-start hover:underline">+ Add More Line Item</button>
 
                     <div class="space-y-1.5 mt-4 border-t pt-4">
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Initial Payment (৳)</label>
+                        <label class="text-sm font-bold text-gray-400 uppercase tracking-widest px-1">Initial Payment (৳)</label>
                         <input id="swal-paid" type="number" class="swal2-input !m-0 !w-full !rounded-lg text-base bg-gray-50 font-bold" placeholder="Paid now?">
                     </div>
                 </div>
@@ -152,7 +152,7 @@ export default function UnifiedBlueAccountsHub() {
             html: `
                 <div class="text-left font-nunito p-2">
                     <table class="w-full text-sm">
-                        <thead class="text-xs text-gray-400 uppercase border-b">
+                        <thead class="text-sm text-gray-400 uppercase border-b">
                             <tr><th class="py-2 text-left">Item Name</th><th class="py-2 text-right">Price</th></tr>
                         </thead>
                         <tbody class="divide-y">
@@ -203,13 +203,13 @@ export default function UnifiedBlueAccountsHub() {
                     <p className="text-sm text-gray-400 font-bold uppercase tracking-widest mt-1">Unified Daily Ledger</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button onClick={() => handleQuickAdd('Income')} className="bg-[#1e6bd6] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:opacity-90 transition-all flex items-center gap-2 active:scale-95">
+                    <button onClick={() => handleQuickAdd('Income')} className="bg-[#1e6bd6] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:opacity-90 transition-all flex items-center gap-2 active:scale-95">
                         <FiPlus /> Income
                     </button>
-                    <button onClick={() => handleQuickAdd('Expense')} className="bg-gray-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-md hover:bg-black transition-all flex items-center gap-2 active:scale-95">
+                    <button onClick={() => handleQuickAdd('Expense')} className="bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-black transition-all flex items-center gap-2 active:scale-95">
                         <FiPlus /> Expense
                     </button>
-                    <button onClick={() => handleAddDue()} className="bg-[#1e6bd6] text-white px-6 py-2.5 rounded-lg text-xs font-black shadow-lg shadow-blue-50 hover:opacity-90 transition-all flex items-center gap-2 active:scale-95">
+                    <button onClick={() => handleAddDue()} className="bg-[#1e6bd6] text-white px-6 py-2.5 rounded-lg text-sm font-black shadow-lg shadow-blue-50 hover:opacity-90 transition-all flex items-center gap-2 active:scale-95">
                         <FiLayers /> ADD NEW DUE (SALE)
                     </button>
                 </div>
@@ -236,14 +236,14 @@ export default function UnifiedBlueAccountsHub() {
                             </div>
                             <div className="bg-white rounded-lg overflow-hidden shadow-sm">
                                 <table className="w-full text-left text-sm text-gray-700">
-                                    <thead className="bg-gray-50/50 text-xs uppercase font-bold text-gray-400">
+                                    <thead className="bg-gray-50/50 text-sm uppercase font-bold text-gray-400">
                                         <tr><th className="px-6 py-4">Transaction Details</th><th className="px-6 py-4 text-center">Type</th><th className="px-6 py-4 text-right">Amount (৳)</th><th className="px-6 py-4 text-center">Action</th></tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-50 font-medium">
                                         {transactions.map(t => (
                                             <tr key={t._id} className="hover:bg-gray-50/50">
-                                                <td className="px-6 py-4"><p className="font-bold text-gray-800 text-base">{t.title}</p><p className="text-xs text-gray-400 font-bold uppercase">{t.items?.length ? t.items.map(i => `${i.name}(৳${i.price})`).join(', ') : ''}</p></td>
-                                                <td className="px-6 py-4 text-center"><span className={`px-3 py-1 rounded-full text-xs font-bold uppercase border ${t.type === 'Expense' ? 'bg-gray-50 text-gray-600 border-gray-200' : 'bg-blue-50 text-[#1e6bd6] border-blue-100'}`}>{t.type}</span></td>
+                                                <td className="px-6 py-4"><p className="font-bold text-gray-800 text-base">{t.title}</p><p className="text-sm text-gray-400 font-bold uppercase">{t.items?.length ? t.items.map(i => `${i.name}(৳${i.price})`).join(', ') : ''}</p></td>
+                                                <td className="px-6 py-4 text-center"><span className={`px-3 py-1 rounded-full text-sm font-bold uppercase border ${t.type === 'Expense' ? 'bg-gray-50 text-gray-600 border-gray-200' : 'bg-blue-50 text-[#1e6bd6] border-blue-100'}`}>{t.type}</span></td>
                                                 <td className={`px-6 py-4 text-right font-black text-base ${t.type === 'Expense' ? 'text-gray-700' : 'text-[#1e6bd6]'}`}>৳{t.amount?.toLocaleString()}</td>
                                                 <td className="px-6 py-4 flex justify-center"><button onClick={() => handleDelete(t._id)} className="text-gray-300 hover:text-red-500 transition-all text-lg"><FiTrash2 /></button></td>
                                             </tr>
@@ -259,7 +259,7 @@ export default function UnifiedBlueAccountsHub() {
                         <div className="bg-white rounded-lg overflow-hidden animate-in slide-in-from-bottom-2 duration-300 shadow-sm">
                             <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/30"><h4 className="font-black text-sm uppercase text-gray-800">Current Market Balances</h4></div>
                             <table className="w-full text-left text-sm">
-                                <thead className="bg-white text-xs font-bold text-gray-400 uppercase border-b border-gray-50">
+                                <thead className="bg-white text-sm font-bold text-gray-400 uppercase border-b border-gray-50">
                                     <tr><th className="px-6 py-4">Customer</th><th className="px-6 py-4 text-right">Owed</th><th className="px-6 py-4 text-right">Remaining Bakī</th><th className="px-6 py-4 text-center">Actions</th></tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50 font-medium">
@@ -267,7 +267,7 @@ export default function UnifiedBlueAccountsHub() {
                                         <tr key={t._id} className="hover:bg-blue-50/10">
                                             <td className="px-6 py-4">
                                                 <p className="font-bold text-gray-800 text-base">{t.customerName || 'Standard Client'}</p>
-                                                <p className="text-xs text-gray-400 font-bold">{t.customerMobile}</p>
+                                                <p className="text-sm text-gray-400 font-bold">{t.customerMobile}</p>
                                             </td>
                                             <td className="px-6 py-4 text-right font-bold text-gray-500">৳{t.totalBill}</td>
                                             <td className="px-6 py-4 text-right text-[#1e6bd6] font-black underline decoration-blue-100 text-base">৳{t.dueAmount}</td>
@@ -276,10 +276,10 @@ export default function UnifiedBlueAccountsHub() {
                                                     <button onClick={() => handleViewItems(t.items)} className="bg-blue-50 text-[#1e6bd6] px-4 py-2 rounded-lg hover:bg-blue-100 transition-all shadow-sm flex items-center gap-2 text-sm font-black uppercase" title="View Details">
                                                         <FiList size={16} /> Info
                                                     </button>
-                                                    <button onClick={() => handleAddDue(t.customerName, t.customerMobile)} className="bg-[#1e6bd6] text-white px-3 py-2 rounded-lg text-xs font-black uppercase flex items-center gap-1.5 hover:opacity-90 shadow-sm">
+                                                    <button onClick={() => handleAddDue(t.customerName, t.customerMobile)} className="bg-[#1e6bd6] text-white px-3 py-2 rounded-lg text-sm font-black uppercase flex items-center gap-1.5 hover:opacity-90 shadow-sm">
                                                         <FiPlus /> Add Due
                                                     </button>
-                                                    <button onClick={() => handleCutDue(t._id, t.dueAmount)} className="bg-gray-800 text-white px-3 py-2 rounded-lg text-xs font-black uppercase flex items-center gap-1.5 hover:bg-black shadow-sm">
+                                                    <button onClick={() => handleCutDue(t._id, t.dueAmount)} className="bg-gray-800 text-white px-3 py-2 rounded-lg text-sm font-black uppercase flex items-center gap-1.5 hover:bg-black shadow-sm">
                                                         <FiMinusCircle /> Cut Due
                                                     </button>
                                                 </div>

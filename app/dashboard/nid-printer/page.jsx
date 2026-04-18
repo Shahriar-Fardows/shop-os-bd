@@ -89,7 +89,7 @@ export default function NIDPrinter() {
                         {croppedFront ? (
                             <div className="w-full h-full flex flex-col items-center">
                                 <img src={croppedFront} alt="Front" className="rounded-lg shadow-md max-w-full border border-gray-200" />
-                                <button onClick={() => {setCroppedFront(null); setFrontImg(null);}} className="mt-4 text-xs font-bold text-red-400 uppercase tracking-widest flex items-center gap-1.5 hover:text-red-600">
+                                <button onClick={() => {setCroppedFront(null); setFrontImg(null);}} className="mt-4 text-sm font-bold text-red-400 uppercase tracking-widest flex items-center gap-1.5 hover:text-red-600">
                                     <FiTrash2 /> Remove & Retry
                                 </button>
                             </div>
@@ -107,7 +107,7 @@ export default function NIDPrinter() {
                         {croppedBack ? (
                             <div className="w-full h-full flex flex-col items-center">
                                 <img src={croppedBack} alt="Back" className="rounded-lg shadow-md max-w-full border border-gray-200" />
-                                <button onClick={() => {setCroppedBack(null); setBackImg(null);}} className="mt-4 text-xs font-bold text-red-400 uppercase tracking-widest flex items-center gap-1.5 hover:text-red-600">
+                                <button onClick={() => {setCroppedBack(null); setBackImg(null);}} className="mt-4 text-sm font-bold text-red-400 uppercase tracking-widest flex items-center gap-1.5 hover:text-red-600">
                                     <FiTrash2 /> Remove & Retry
                                 </button>
                             </div>

@@ -6,7 +6,8 @@ import 'react-image-crop/dist/ReactCrop.css';
 import {
     FiUpload, FiDownload, FiTrash2, FiScissors, FiLoader, FiZap,
     FiAlertCircle, FiCrop, FiDroplet, FiCheck, FiX, FiRotateCcw,
-    FiEdit3, FiRotateCw, FiMaximize2, FiSliders, FiImage, FiRefreshCw
+    FiEdit3, FiRotateCw, FiMaximize2, FiSliders, FiImage, FiRefreshCw,
+    FiGrid, FiType, FiSquare, FiPrinter
 } from 'react-icons/fi';
 import Swal from 'sweetalert2';
 
@@ -27,6 +28,21 @@ const loadImage = (src) => new Promise((resolve, reject) => {
 });
 
 const PRESET_COLORS = ['#ffffff', '#1e6bd6', '#000000', '#f3f4f6', '#fef3c7', '#dcfce7', '#fee2e2', '#e0e7ff'];
+
+const PHOTO_SIZES = [
+    { id: 'passport', label: 'Passport 35×45mm', w: 35, h: 45 },
+    { id: 'stamp', label: 'Stamp 25×32mm', w: 25, h: 32 },
+    { id: 'visa', label: 'Visa 2"×2"', w: 51, h: 51 },
+    { id: 'pp-std', label: 'PP 2"×2.5"', w: 51, h: 64 },
+    { id: 'id-card', label: 'ID Card 1"×1.25"', w: 25, h: 32 },
+];
+
+const SHEET_SIZES = [
+    { id: 'A4', label: 'A4 (210×297)', w: 210, h: 297 },
+    { id: '4R', label: '4R (102×152)', w: 102, h: 152 },
+];
+
+const mmToPx = (mm, dpi = 300) => Math.round((mm / 25.4) * dpi);
 
 export default function ImageEditPage() {
     const [currentImage, setCurrentImage] = useState(null);
@@ -58,6 +74,22 @@ export default function ImageEditPage() {
     // Resize
     const [size, setSize] = useState({ w: 0, h: 0, lock: true });
     const [naturalSize, setNaturalSize] = useState({ w: 0, h: 0 });
+
+    // Photo Sheet
+    const [photoSize, setPhotoSize] = useState('passport');
+    const [sheetSize, setSheetSize] = useState('A4');
+    const [cutMarks, setCutMarks] = useState(true);
+    const [photoCount, setPhotoCount] = useState(0); // 0 = auto-max
+    const [layoutMode, setLayoutMode] = useState('packed'); // 'packed' (top-left) | 'centered'
+
+    // Text overlay
+    const [textCfg, setTextCfg] = useState({
+        text: 'Sample Text', size: 48, color: '#1e6bd6',
+        x: 50, y: 90, weight: 'bold'
+    });
+
+    // Border
+    const [borderCfg, setBorderCfg] = useState({ width: 20, color: '#1e6bd6' });
 
     // ---------------- state helpers ----------------
     const pushImage = (next) => {
@@ -332,6 +364,170 @@ export default function ImageEditPage() {
         setActiveTool(null);
     };
 
+    // ---------------- Photo Sheet ----------------
+    const sheetLayout = (() => {
+        const sz = PHOTO_SIZES.find(s => s.id === photoSize);
+        const sh = SHEET_SIZES.find(s => s.id === sheetSize);
+        if (!sz || !sh) return null;
+        const marginMm = 5, gapMm = 2;
+        const maxCols = Math.max(1, Math.floor((sh.w - 2 * marginMm + gapMm) / (sz.w + gapMm)));
+        const maxRows = Math.max(1, Math.floor((sh.h - 2 * marginMm + gapMm) / (sz.h + gapMm)));
+        const maxFit = maxCols * maxRows;
+        return { sz, sh, maxCols, maxRows, maxFit, marginMm, gapMm };
+    })();
+
+    const effectiveCount = sheetLayout
+        ? (photoCount > 0 ? Math.min(photoCount, sheetLayout.maxFit) : sheetLayout.maxFit)
+        : 0;
+
+    // Sync photoCount with layout changes: if 0 (auto) or exceeds new max, clamp
+    useEffect(() => {
+        if (!sheetLayout) return;
+        if (photoCount > sheetLayout.maxFit) setPhotoCount(sheetLayout.maxFit);
+    }, [photoSize, sheetSize]); // eslint-disable-line
+
+    const generateSheetDataUrl = async () => {
+        if (!currentImage || !sheetLayout) return null;
+        const { sz, sh, maxCols, gapMm } = sheetLayout;
+        const sheetW = mmToPx(sh.w);
+        const sheetH = mmToPx(sh.h);
+        const photoW = mmToPx(sz.w);
+        const photoH = mmToPx(sz.h);
+        const gap = mmToPx(gapMm);
+        const margin = mmToPx(sheetLayout.marginMm);
+        const img = await loadImage(currentImage);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = sheetW;
+        canvas.height = sheetH;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, sheetW, sheetH);
+
+        // cover-fit crop source
+        const srcRatio = img.naturalWidth / img.naturalHeight;
+        const dstRatio = photoW / photoH;
+        let sx = 0, sy = 0, sw = img.naturalWidth, sh2 = img.naturalHeight;
+        if (srcRatio > dstRatio) {
+            sw = img.naturalHeight * dstRatio;
+            sx = (img.naturalWidth - sw) / 2;
+        } else {
+            sh2 = img.naturalWidth / dstRatio;
+            sy = (img.naturalHeight - sh2) / 2;
+        }
+
+        // packed: fill rows top-left; only use as many rows as needed
+        const count = effectiveCount;
+        const usedRows = Math.ceil(count / maxCols);
+        const totalW = maxCols * photoW + (maxCols - 1) * gap;
+        const totalH = usedRows * photoH + (usedRows - 1) * gap;
+
+        let offsetX, offsetY;
+        if (layoutMode === 'centered') {
+            offsetX = (sheetW - totalW) / 2;
+            offsetY = (sheetH - totalH) / 2;
+        } else {
+            offsetX = margin;
+            offsetY = margin;
+        }
+
+        for (let i = 0; i < count; i++) {
+            const c = i % maxCols;
+            const r = Math.floor(i / maxCols);
+            const x = offsetX + c * (photoW + gap);
+            const y = offsetY + r * (photoH + gap);
+            ctx.drawImage(img, sx, sy, sw, sh2, x, y, photoW, photoH);
+            if (cutMarks) {
+                ctx.strokeStyle = '#9ca3af';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([6, 4]);
+                ctx.strokeRect(x + 0.5, y + 0.5, photoW, photoH);
+                ctx.setLineDash([]);
+            }
+        }
+        return canvas.toDataURL('image/png');
+    };
+
+    const applyPhotoSheet = async () => {
+        const dataUrl = await generateSheetDataUrl();
+        if (!dataUrl) return;
+        pushImage(dataUrl);
+        setActiveTool(null);
+    };
+
+    const printPhotoSheet = async () => {
+        const dataUrl = await generateSheetDataUrl();
+        if (!dataUrl) return;
+        const sh = sheetLayout.sh;
+        const pageSize = sheetSize === 'A4' ? 'A4' : `${sh.w}mm ${sh.h}mm`;
+        const win = window.open('', '_blank');
+        if (!win) {
+            Swal.fire('Blocked', 'Please allow popups to print.', 'warning');
+            return;
+        }
+        win.document.write(`<!doctype html><html><head><title>Print Photo Sheet</title><style>
+            @page { size: ${pageSize}; margin: 0; }
+            html, body { margin: 0; padding: 0; background: #fff; }
+            img { width: 100%; height: auto; display: block; }
+        </style></head><body>
+            <img src="${dataUrl}" onload="setTimeout(()=>{window.focus();window.print();}, 100);" />
+        </body></html>`);
+        win.document.close();
+    };
+
+    const printCurrentImage = () => {
+        if (!currentImage) return;
+        const win = window.open('', '_blank');
+        if (!win) {
+            Swal.fire('Blocked', 'Please allow popups to print.', 'warning');
+            return;
+        }
+        win.document.write(`<!doctype html><html><head><title>Print Image</title><style>
+            @page { margin: 10mm; }
+            html, body { margin: 0; padding: 0; background: #fff; text-align: center; }
+            img { max-width: 100%; max-height: 100vh; }
+        </style></head><body>
+            <img src="${currentImage}" onload="setTimeout(()=>{window.focus();window.print();}, 100);" />
+        </body></html>`);
+        win.document.close();
+    };
+
+    // ---------------- Add Text ----------------
+    const applyText = async () => {
+        if (!currentImage || !textCfg.text.trim()) return;
+        const img = await loadImage(currentImage);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        ctx.font = `${textCfg.weight} ${textCfg.size}px Nunito, Arial, sans-serif`;
+        ctx.fillStyle = textCfg.color;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const x = (textCfg.x / 100) * canvas.width;
+        const y = (textCfg.y / 100) * canvas.height;
+        ctx.fillText(textCfg.text, x, y);
+        pushImage(canvas.toDataURL('image/png'));
+        setActiveTool(null);
+    };
+
+    // ---------------- Border ----------------
+    const applyBorder = async () => {
+        if (!currentImage) return;
+        const img = await loadImage(currentImage);
+        const bw = borderCfg.width;
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth + bw * 2;
+        canvas.height = img.naturalHeight + bw * 2;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = borderCfg.color;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, bw, bw);
+        pushImage(canvas.toDataURL('image/png'));
+        setActiveTool(null);
+    };
+
     // ---------------- Download ----------------
     const handleDownload = () => {
         if (!currentImage) return;
@@ -345,13 +541,16 @@ export default function ImageEditPage() {
 
     // ---------------- Tools list ----------------
     const tools = [
-        { id: 'crop', label: 'Crop', icon: FiCrop },
-        { id: 'bg-remove', label: 'BG Remove', icon: FiScissors },
-        { id: 'bg-change', label: 'BG Change', icon: FiDroplet },
-        { id: 'erase', label: 'Eraser', icon: FiEdit3 },
-        { id: 'rotate', label: 'Rotate & Flip', icon: FiRotateCw },
-        { id: 'adjust', label: 'Adjust', icon: FiSliders },
-        { id: 'resize', label: 'Resize', icon: FiMaximize2 },
+        { id: 'crop', label: 'Crop', icon: FiCrop, group: 'edit' },
+        { id: 'bg-remove', label: 'BG Remove', icon: FiScissors, group: 'edit' },
+        { id: 'bg-change', label: 'BG Change', icon: FiDroplet, group: 'edit' },
+        { id: 'erase', label: 'Eraser', icon: FiEdit3, group: 'edit' },
+        { id: 'rotate', label: 'Rotate & Flip', icon: FiRotateCw, group: 'edit' },
+        { id: 'adjust', label: 'Adjust', icon: FiSliders, group: 'edit' },
+        { id: 'resize', label: 'Resize', icon: FiMaximize2, group: 'edit' },
+        { id: 'photo-sheet', label: 'PP Photo Sheet', icon: FiGrid, group: 'print' },
+        { id: 'text', label: 'Add Text', icon: FiType, group: 'print' },
+        { id: 'border', label: 'Border / Frame', icon: FiSquare, group: 'print' },
     ];
 
     const previewStyle = activeTool === 'adjust'
@@ -366,6 +565,9 @@ export default function ImageEditPage() {
         'rotate': 'Rotate & Flip Image',
         'adjust': 'Adjust Colors',
         'resize': 'Resize Canvas',
+        'photo-sheet': 'Passport Photo Sheet Layout',
+        'text': 'Add Text Overlay',
+        'border': 'Add Border / Frame',
     }[activeTool] || 'Canvas Preview';
 
     return (
@@ -373,8 +575,8 @@ export default function ImageEditPage() {
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h2 className="text-3xl font-extrabold text-gray-800 tracking-tight">AI Image Editor</h2>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2">Crop · Cut · Erase · Adjust · Transform</p>
+                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">AI Image Studio</h2>
+                    <p className="text-sm text-gray-400 font-bold uppercase tracking-widest mt-1">Smart Shopkeeper Image Tools</p>
                 </div>
                 <div className="flex items-center gap-4">
                     {currentImage && history.length > 0 && !activeTool && (
@@ -398,23 +600,25 @@ export default function ImageEditPage() {
 
             {!currentImage ? (
                 /* Upload Zone */
-                <div className="bg-white rounded-2xl border-2 border-dashed border-blue-100 p-20 flex flex-col items-center justify-center text-center group hover:border-[#1e6bd6] hover:bg-blue-50/30 transition-all cursor-pointer relative overflow-hidden shadow-sm">
-                    <input
-                        type="file"
-                        accept="image/*"
-                        className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                        onChange={handleFileSelect}
-                    />
-                    <div className="bg-blue-50 w-20 h-20 rounded-2xl flex items-center justify-center text-[#1e6bd6] mb-6 group-hover:scale-110 transition-transform shadow-sm border border-blue-100">
-                        <FiUpload size={28} />
+                <div className="space-y-4">
+                    <div className="bg-white rounded-xl border-2 border-dashed border-blue-100 p-12 flex flex-col items-center justify-center text-center group hover:border-[#1e6bd6] hover:bg-blue-50/30 transition-all cursor-pointer relative overflow-hidden shadow-sm">
+                        <input
+                            type="file"
+                            accept="image/*"
+                            className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                            onChange={handleFileSelect}
+                        />
+                        <div className="bg-blue-50 w-16 h-16 rounded-xl flex items-center justify-center text-[#1e6bd6] mb-4 group-hover:scale-110 transition-transform shadow-sm border border-blue-100">
+                            <FiUpload size={24} />
+                        </div>
+                        <h3 className="text-xl font-black text-gray-800 tracking-tight">Upload Shop Images</h3>
+                        <p className="text-gray-400 font-bold mt-2 uppercase text-[10px] tracking-widest">PNG, JPG, WEBP (Max 10MB)</p>
                     </div>
-                    <h3 className="text-xl font-extrabold text-gray-800 tracking-tight">Upload Your Image</h3>
-                    <p className="text-gray-400 font-bold mt-2 uppercase text-[10px] tracking-widest">Supports PNG, JPG (Max 10MB)</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
                     {/* Canvas Card */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center">
                         <div className="w-full flex items-center justify-between mb-4">
                             <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">{activeLabel}</span>
                             {naturalSize.w > 0 && (
@@ -464,8 +668,80 @@ export default function ImageEditPage() {
                                 </div>
                             )}
 
+                            {/* Photo Sheet preview */}
+                            {activeTool === 'photo-sheet' && sheetLayout && (() => {
+                                const previewH = 500;
+                                const previewW = (sheetLayout.sh.w / sheetLayout.sh.h) * previewH;
+                                const pxPerMm = previewW / sheetLayout.sh.w;
+                                const pw = sheetLayout.sz.w * pxPerMm;
+                                const ph = sheetLayout.sz.h * pxPerMm;
+                                const gap = sheetLayout.gapMm * pxPerMm;
+                                const usedRows = Math.ceil(effectiveCount / sheetLayout.maxCols);
+                                const totalW = sheetLayout.maxCols * pw + (sheetLayout.maxCols - 1) * gap;
+                                const totalH = usedRows * ph + (usedRows - 1) * gap;
+                                const margin = sheetLayout.marginMm * pxPerMm;
+                                const offsetX = layoutMode === 'centered' ? (previewW - totalW) / 2 : margin;
+                                const offsetY = layoutMode === 'centered' ? (previewH - totalH) / 2 : margin;
+                                return (
+                                    <div className="bg-white shadow-inner relative border border-gray-200" style={{ width: previewW, height: previewH }}>
+                                        {Array.from({ length: effectiveCount }).map((_, i) => {
+                                            const c = i % sheetLayout.maxCols;
+                                            const r = Math.floor(i / sheetLayout.maxCols);
+                                            return (
+                                                <div
+                                                    key={i}
+                                                    className={`absolute overflow-hidden ${cutMarks ? 'outline outline-1 outline-dashed outline-gray-400' : ''}`}
+                                                    style={{
+                                                        left: offsetX + c * (pw + gap),
+                                                        top: offsetY + r * (ph + gap),
+                                                        width: pw,
+                                                        height: ph
+                                                    }}
+                                                >
+                                                    <img src={currentImage} alt="" className="w-full h-full object-cover" />
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                );
+                            })()}
+
+                            {/* Text overlay preview */}
+                            {activeTool === 'text' && (
+                                <div className="relative inline-block">
+                                    <img src={currentImage} alt="Current" className="max-h-[540px] object-contain" />
+                                    <div
+                                        className="absolute pointer-events-none whitespace-pre select-none"
+                                        style={{
+                                            left: `${textCfg.x}%`,
+                                            top: `${textCfg.y}%`,
+                                            transform: 'translate(-50%, -50%)',
+                                            color: textCfg.color,
+                                            fontSize: `${textCfg.size / 3}px`,
+                                            fontWeight: textCfg.weight === 'bold' ? 800 : 400,
+                                            fontFamily: 'Nunito, sans-serif'
+                                        }}
+                                    >
+                                        {textCfg.text}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Border preview */}
+                            {activeTool === 'border' && (
+                                <div
+                                    style={{
+                                        padding: `${borderCfg.width / 3}px`,
+                                        backgroundColor: borderCfg.color,
+                                        display: 'inline-block'
+                                    }}
+                                >
+                                    <img src={currentImage} alt="Current" className="max-h-[500px] object-contain block" />
+                                </div>
+                            )}
+
                             {/* Default / BG Remove / Rotate / Adjust / Resize */}
-                            {(!activeTool || activeTool === 'bg-remove' || activeTool === 'rotate' || activeTool === 'adjust' || activeTool === 'resize') && (
+                            {(!activeTool || ['bg-remove', 'rotate', 'adjust', 'resize'].includes(activeTool)) && (
                                 <>
                                     <img
                                         src={currentImage}
@@ -629,44 +905,220 @@ export default function ImageEditPage() {
                                     </div>
                                 )}
 
+                                {/* Photo Sheet controls */}
+                                {activeTool === 'photo-sheet' && sheetLayout && (
+                                    <div className="space-y-3">
+                                        <div>
+                                            <span className="text-[10px] font-bold text-[#1e6bd6] uppercase tracking-widest block mb-2">Photo Size</span>
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                                {PHOTO_SIZES.map((s) => (
+                                                    <button
+                                                        key={s.id}
+                                                        onClick={() => setPhotoSize(s.id)}
+                                                        className={`px-3 py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest transition-all border ${photoSize === s.id ? 'bg-[#1e6bd6] text-white border-[#1e6bd6] shadow-sm shadow-blue-100' : 'bg-blue-50/60 text-[#1e6bd6] border-blue-100 hover:bg-blue-50'}`}
+                                                    >
+                                                        {s.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span className="text-[10px] font-bold text-[#1e6bd6] uppercase tracking-widest block mb-2">Sheet Size</span>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {SHEET_SIZES.map((s) => (
+                                                    <button
+                                                        key={s.id}
+                                                        onClick={() => setSheetSize(s.id)}
+                                                        className={`px-3 py-2 rounded-lg text-[11px] font-extrabold uppercase tracking-widest transition-all border ${sheetSize === s.id ? 'bg-[#1e6bd6] text-white border-[#1e6bd6] shadow-sm shadow-blue-100' : 'bg-blue-50/60 text-[#1e6bd6] border-blue-100 hover:bg-blue-50'}`}
+                                                    >
+                                                        {s.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="bg-blue-50/60 px-4 py-3 rounded-xl border border-blue-100 space-y-3">
+                                            <div className="flex items-center gap-3 flex-wrap">
+                                                <span className="text-[10px] font-bold text-[#1e6bd6] uppercase tracking-widest">How Many</span>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    max={sheetLayout.maxFit}
+                                                    value={photoCount === 0 ? sheetLayout.maxFit : photoCount}
+                                                    onChange={(e) => {
+                                                        const v = parseInt(e.target.value) || 1;
+                                                        setPhotoCount(Math.max(1, Math.min(sheetLayout.maxFit, v)));
+                                                    }}
+                                                    className="w-20 px-3 py-1.5 rounded-lg border border-blue-100 bg-white text-sm font-extrabold text-[#1e6bd6] focus:border-[#1e6bd6] focus:ring-2 focus:ring-blue-100 outline-none text-center"
+                                                />
+                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">/ max {sheetLayout.maxFit}</span>
+                                                <div className="flex gap-1 ml-auto">
+                                                    {[4, 6, 8, 12].filter(n => n <= sheetLayout.maxFit).map((n) => (
+                                                        <button
+                                                            key={n}
+                                                            onClick={() => setPhotoCount(n)}
+                                                            className={`px-2.5 py-1 rounded text-[10px] font-extrabold uppercase tracking-widest transition-all ${photoCount === n ? 'bg-[#1e6bd6] text-white' : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-200'}`}
+                                                        >
+                                                            {n}
+                                                        </button>
+                                                    ))}
+                                                    <button
+                                                        onClick={() => setPhotoCount(sheetLayout.maxFit)}
+                                                        className={`px-2.5 py-1 rounded text-[10px] font-extrabold uppercase tracking-widest transition-all ${photoCount === sheetLayout.maxFit ? 'bg-[#1e6bd6] text-white' : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-200'}`}
+                                                    >
+                                                        Full
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3 flex-wrap">
+                                                <span className="text-[10px] font-bold text-[#1e6bd6] uppercase tracking-widest">Layout</span>
+                                                <div className="flex gap-1">
+                                                    <button
+                                                        onClick={() => setLayoutMode('packed')}
+                                                        className={`px-3 py-1 rounded text-[10px] font-extrabold uppercase tracking-widest transition-all ${layoutMode === 'packed' ? 'bg-[#1e6bd6] text-white' : 'bg-white text-gray-500 border border-gray-200'}`}
+                                                    >
+                                                        Top-Left
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setLayoutMode('centered')}
+                                                        className={`px-3 py-1 rounded text-[10px] font-extrabold uppercase tracking-widest transition-all ${layoutMode === 'centered' ? 'bg-[#1e6bd6] text-white' : 'bg-white text-gray-500 border border-gray-200'}`}
+                                                    >
+                                                        Centered
+                                                    </button>
+                                                </div>
+                                                <label className="flex items-center gap-2 cursor-pointer ml-auto">
+                                                    <input type="checkbox" checked={cutMarks} onChange={(e) => setCutMarks(e.target.checked)} className="accent-[#1e6bd6]" />
+                                                    <span className="text-[10px] font-bold text-[#1e6bd6] uppercase tracking-widest">Cut Marks</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Text controls */}
+                                {activeTool === 'text' && (
+                                    <div className="space-y-3">
+                                        <div className="bg-blue-50/60 px-4 py-3 rounded-xl border border-blue-100 space-y-3">
+                                            <input
+                                                type="text"
+                                                value={textCfg.text}
+                                                onChange={(e) => setTextCfg((c) => ({ ...c, text: e.target.value }))}
+                                                placeholder="Type your text..."
+                                                className="w-full px-3 py-2 rounded-lg border border-blue-100 bg-white text-sm font-bold text-gray-700 focus:border-[#1e6bd6] focus:ring-2 focus:ring-blue-100 outline-none"
+                                            />
+                                            <div className="flex items-center gap-3 flex-wrap">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] font-bold text-[#1e6bd6] uppercase tracking-widest">Color</span>
+                                                    <input type="color" value={textCfg.color} onChange={(e) => setTextCfg((c) => ({ ...c, color: e.target.value }))} className="w-9 h-8 rounded border border-gray-200 cursor-pointer" />
+                                                </div>
+                                                <div className="flex items-center gap-2 flex-1 min-w-[160px]">
+                                                    <span className="text-[10px] font-bold text-[#1e6bd6] uppercase tracking-widest">Size</span>
+                                                    <input type="range" min="12" max="200" value={textCfg.size} onChange={(e) => setTextCfg((c) => ({ ...c, size: Number(e.target.value) }))} className="flex-1 accent-[#1e6bd6]" />
+                                                    <span className="text-xs font-extrabold text-[#1e6bd6] w-10 text-right">{textCfg.size}</span>
+                                                </div>
+                                                <button
+                                                    onClick={() => setTextCfg((c) => ({ ...c, weight: c.weight === 'bold' ? 'normal' : 'bold' }))}
+                                                    className={`px-3 py-1.5 rounded text-[10px] font-extrabold uppercase tracking-widest transition-all ${textCfg.weight === 'bold' ? 'bg-[#1e6bd6] text-white' : 'bg-white text-gray-500 border border-gray-200'}`}
+                                                >
+                                                    Bold
+                                                </button>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-2 flex-1">
+                                                    <span className="text-[10px] font-bold text-[#1e6bd6] uppercase tracking-widest w-4">X</span>
+                                                    <input type="range" min="0" max="100" value={textCfg.x} onChange={(e) => setTextCfg((c) => ({ ...c, x: Number(e.target.value) }))} className="flex-1 accent-[#1e6bd6]" />
+                                                </div>
+                                                <div className="flex items-center gap-2 flex-1">
+                                                    <span className="text-[10px] font-bold text-[#1e6bd6] uppercase tracking-widest w-4">Y</span>
+                                                    <input type="range" min="0" max="100" value={textCfg.y} onChange={(e) => setTextCfg((c) => ({ ...c, y: Number(e.target.value) }))} className="flex-1 accent-[#1e6bd6]" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Border controls */}
+                                {activeTool === 'border' && (
+                                    <div className="flex items-center gap-4 bg-blue-50/60 px-4 py-3 rounded-xl border border-blue-100 flex-wrap">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-bold text-[#1e6bd6] uppercase tracking-widest">Color</span>
+                                            <input type="color" value={borderCfg.color} onChange={(e) => setBorderCfg((c) => ({ ...c, color: e.target.value }))} className="w-9 h-8 rounded border border-gray-200 cursor-pointer" />
+                                            <div className="flex gap-1">
+                                                {PRESET_COLORS.slice(0, 4).map((c) => (
+                                                    <button
+                                                        key={c}
+                                                        onClick={() => setBorderCfg((cfg) => ({ ...cfg, color: c }))}
+                                                        className={`w-6 h-6 rounded border-2 ${borderCfg.color === c ? 'border-[#1e6bd6] scale-110' : 'border-gray-200'}`}
+                                                        style={{ backgroundColor: c }}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 flex-1 min-w-[180px]">
+                                            <span className="text-[10px] font-bold text-[#1e6bd6] uppercase tracking-widest">Width</span>
+                                            <input type="range" min="2" max="100" value={borderCfg.width} onChange={(e) => setBorderCfg((c) => ({ ...c, width: Number(e.target.value) }))} className="flex-1 accent-[#1e6bd6]" />
+                                            <span className="text-xs font-extrabold text-[#1e6bd6] w-10 text-right">{borderCfg.width}px</span>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Action row */}
                                 <div className="flex gap-2 justify-end pt-1">
                                     <button
                                         onClick={() => { setActiveTool(null); resetAdjust(); }}
                                         disabled={isProcessing}
-                                        className="px-5 py-3 rounded-lg font-extrabold uppercase tracking-widest text-xs text-gray-500 bg-gray-50 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50 transition-all"
+                                        className="px-4 py-2.5 rounded-lg font-black uppercase tracking-widest text-sm text-gray-500 bg-gray-50 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50 transition-all"
                                     >
                                         <FiX /> Cancel
                                     </button>
 
                                     {activeTool === 'crop' && (
-                                        <button onClick={applyCrop} className="px-5 py-3 rounded-lg font-extrabold uppercase tracking-widest text-xs text-white bg-[#1e6bd6] hover:bg-[#1656ac] flex items-center gap-2 shadow-sm shadow-blue-100 transition-all">
+                                        <button onClick={applyCrop} className="px-5 py-2.5 rounded-lg font-black uppercase tracking-widest text-sm text-white bg-[#1e6bd6] hover:bg-[#1656ac] flex items-center gap-2 shadow-sm shadow-blue-100 transition-all">
                                             <FiCheck /> Apply Crop
                                         </button>
                                     )}
                                     {activeTool === 'bg-remove' && (
-                                        <button onClick={runBgRemove} disabled={isProcessing} className="px-5 py-3 rounded-lg font-extrabold uppercase tracking-widest text-xs text-white bg-[#1e6bd6] hover:bg-[#1656ac] flex items-center gap-2 shadow-sm shadow-blue-100 disabled:opacity-60 transition-all">
-                                            <FiZap /> {isProcessing ? 'Processing...' : 'Start AI Removal'}
+                                        <button onClick={runBgRemove} disabled={isProcessing} className="px-4 py-2.5 rounded-lg font-black uppercase tracking-widest text-sm text-white bg-[#1e6bd6] hover:bg-[#1656ac] flex items-center gap-2 shadow-sm shadow-blue-100 disabled:opacity-60 transition-all">
+                                            <FiZap /> {isProcessing ? 'Cutting...' : 'Start AI Removal'}
                                         </button>
                                     )}
                                     {activeTool === 'bg-change' && (
-                                        <button onClick={applyBackground} className="px-5 py-3 rounded-lg font-extrabold uppercase tracking-widest text-xs text-white bg-[#1e6bd6] hover:bg-[#1656ac] flex items-center gap-2 shadow-sm shadow-blue-100 transition-all">
+                                        <button onClick={applyBackground} className="px-5 py-2.5 rounded-lg font-black uppercase tracking-widest text-sm text-white bg-[#1e6bd6] hover:bg-[#1656ac] flex items-center gap-2 shadow-sm shadow-blue-100 transition-all">
                                             <FiCheck /> Apply Background
                                         </button>
                                     )}
                                     {activeTool === 'erase' && (
-                                        <button onClick={applyErase} className="px-5 py-3 rounded-lg font-extrabold uppercase tracking-widest text-xs text-white bg-[#1e6bd6] hover:bg-[#1656ac] flex items-center gap-2 shadow-sm shadow-blue-100 transition-all">
+                                        <button onClick={applyErase} className="px-5 py-2.5 rounded-lg font-black uppercase tracking-widest text-sm text-white bg-[#1e6bd6] hover:bg-[#1656ac] flex items-center gap-2 shadow-sm shadow-blue-100 transition-all">
                                             <FiCheck /> Save Erase
                                         </button>
                                     )}
                                     {activeTool === 'adjust' && (
-                                        <button onClick={applyAdjust} className="px-5 py-3 rounded-lg font-extrabold uppercase tracking-widest text-xs text-white bg-[#1e6bd6] hover:bg-[#1656ac] flex items-center gap-2 shadow-sm shadow-blue-100 transition-all">
+                                        <button onClick={applyAdjust} className="px-5 py-2.5 rounded-lg font-black uppercase tracking-widest text-sm text-white bg-[#1e6bd6] hover:bg-[#1656ac] flex items-center gap-2 shadow-sm shadow-blue-100 transition-all">
                                             <FiCheck /> Apply Adjustments
                                         </button>
                                     )}
                                     {activeTool === 'resize' && (
-                                        <button onClick={applyResize} className="px-5 py-3 rounded-lg font-extrabold uppercase tracking-widest text-xs text-white bg-[#1e6bd6] hover:bg-[#1656ac] flex items-center gap-2 shadow-sm shadow-blue-100 transition-all">
+                                        <button onClick={applyResize} className="px-5 py-2.5 rounded-lg font-black uppercase tracking-widest text-sm text-white bg-[#1e6bd6] hover:bg-[#1656ac] flex items-center gap-2 shadow-sm shadow-blue-100 transition-all">
                                             <FiCheck /> Apply Resize
+                                        </button>
+                                    )}
+                                    {activeTool === 'photo-sheet' && (
+                                        <>
+                                            <button onClick={printPhotoSheet} className="px-4 py-2.5 rounded-lg font-black uppercase tracking-widest text-sm text-[#1e6bd6] bg-blue-50 hover:bg-blue-100 border border-blue-100 flex items-center gap-2 transition-all">
+                                                <FiPrinter /> Print Direct
+                                            </button>
+                                            <button onClick={applyPhotoSheet} className="px-4 py-2.5 rounded-lg font-black uppercase tracking-widest text-sm text-white bg-[#1e6bd6] hover:bg-[#1656ac] flex items-center gap-2 shadow-sm shadow-blue-100 transition-all">
+                                                <FiCheck /> Generate Sheet
+                                            </button>
+                                        </>
+                                    )}
+                                    {activeTool === 'text' && (
+                                        <button onClick={applyText} className="px-5 py-2.5 rounded-lg font-black uppercase tracking-widest text-sm text-white bg-[#1e6bd6] hover:bg-[#1656ac] flex items-center gap-2 shadow-sm shadow-blue-100 transition-all">
+                                            <FiCheck /> Apply Text
+                                        </button>
+                                    )}
+                                    {activeTool === 'border' && (
+                                        <button onClick={applyBorder} className="px-5 py-2.5 rounded-lg font-black uppercase tracking-widest text-sm text-white bg-[#1e6bd6] hover:bg-[#1656ac] flex items-center gap-2 shadow-sm shadow-blue-100 transition-all">
+                                            <FiCheck /> Apply Border
                                         </button>
                                     )}
                                 </div>
@@ -674,22 +1126,30 @@ export default function ImageEditPage() {
                         )}
 
                         {!activeTool && (
-                            <button
-                                onClick={handleDownload}
-                                className="mt-6 w-full bg-[#1e6bd6] hover:bg-[#1656ac] text-white py-4 rounded-xl font-extrabold uppercase tracking-widest text-xs shadow-sm shadow-blue-100 flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
-                            >
-                                <FiDownload /> Download Image
-                            </button>
+                            <div className="mt-6 w-full grid grid-cols-2 gap-3">
+                                <button
+                                    onClick={printCurrentImage}
+                                    className="bg-blue-50 hover:bg-blue-100 text-[#1e6bd6] py-2.5 rounded-lg font-black uppercase tracking-widest text-sm border border-blue-100 flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                                >
+                                    <FiPrinter /> Print
+                                </button>
+                                <button
+                                    onClick={handleDownload}
+                                    className="bg-[#1e6bd6] hover:bg-[#1656ac] text-white py-2.5 rounded-lg font-black uppercase tracking-widest text-sm shadow-md shadow-blue-50 flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                                >
+                                    <FiDownload /> Export
+                                </button>
+                            </div>
                         )}
                     </div>
 
                     {/* Tool Sidebar */}
-                    <aside className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <aside className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                         <div className="px-2 mb-3">
-                            <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Tools</span>
+                            <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Edit Tools</span>
                         </div>
                         <div className="space-y-1">
-                            {tools.map((t) => {
+                            {tools.filter(t => t.group === 'edit').map((t) => {
                                 const Icon = t.icon;
                                 const isActive = activeTool === t.id;
                                 return (
@@ -708,6 +1168,33 @@ export default function ImageEditPage() {
                                     </button>
                                 );
                             })}
+                        </div>
+
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                            <div className="px-2 mb-2">
+                                <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Print Shop</span>
+                            </div>
+                            <div className="space-y-1">
+                                {tools.filter(t => t.group === 'print').map((t) => {
+                                    const Icon = t.icon;
+                                    const isActive = activeTool === t.id;
+                                    return (
+                                        <button
+                                            key={t.id}
+                                            onClick={() => setActiveTool(t.id)}
+                                            disabled={isProcessing}
+                                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all text-left disabled:opacity-50 ${
+                                                isActive
+                                                    ? 'bg-blue-50 text-[#1e6bd6] font-bold shadow-sm shadow-blue-50'
+                                                    : 'text-gray-500 hover:bg-gray-50 font-medium'
+                                            }`}
+                                        >
+                                            <Icon size={18} className={isActive ? 'text-[#1e6bd6]' : 'text-gray-400'} />
+                                            <span>{t.label}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
 
                         <div className="mt-3 pt-3 border-t border-gray-100">
@@ -732,14 +1219,14 @@ export default function ImageEditPage() {
             )}
 
             {/* Info Footer */}
-            <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#1e6bd6] flex items-center justify-center shrink-0 border border-blue-100 shadow-sm">
+            <div className="bg-white p-5 rounded-xl border border-gray-100 flex items-start gap-4 shadow-sm">
+                <div className="w-10 h-10 rounded-lg bg-blue-50 text-[#1e6bd6] flex items-center justify-center shrink-0 border border-blue-100 shadow-sm">
                     <FiAlertCircle size={18} />
                 </div>
                 <div>
-                    <h4 className="text-sm font-extrabold text-gray-800 tracking-tight">Privacy Protected AI</h4>
-                    <p className="text-xs font-medium text-gray-500 mt-1 leading-relaxed">
-                        This editor runs entirely in your browser. Your images are never uploaded to any server — all editing happens locally on your computer for maximum security and privacy.
+                    <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest">Privacy Protected AI</h4>
+                    <p className="text-[11px] font-bold text-gray-400 mt-1 leading-relaxed">
+                        THIS STUDIO RUNS ENTIRELY IN YOUR BROWSER. YOUR SHOP IMAGES ARE NEVER UPLOADED TO OUR SERVERS — PROCESSING HAPPENS LOCALLY FOR MAXIMUM SECURITY AND PRIVACY.
                     </p>
                 </div>
             </div>
