@@ -1,5 +1,5 @@
 "use client";
-import { FiHome, FiBox, FiHelpCircle, FiUser, FiLogOut, FiLink, FiDollarSign, FiImage, FiCreditCard, FiScissors, FiFileText, FiGrid, FiFile, FiMail } from 'react-icons/fi';
+import { FiHome, FiBox, FiHelpCircle, FiUser, FiLogOut, FiLink, FiDollarSign, FiImage, FiCreditCard, FiScissors, FiFileText, FiGrid, FiFile, FiMail, FiGift } from 'react-icons/fi';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
@@ -165,7 +165,22 @@ const Sidebar = ({ handleLogout }) => {
                     <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-none">System & Support</span>
                 </div>
                 
-                <Link 
+                <Link
+                    href="/dashboard/refer"
+                    className={`flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm transition-all relative ${
+                        pathname === '/dashboard/refer'
+                        ? 'bg-blue-50 text-[#1e6bd6] font-bold'
+                        : 'text-gray-500 hover:bg-gray-50 font-medium'
+                    }`}
+                >
+                    <FiGift size={20} className={pathname === '/dashboard/refer' ? 'text-[#1e6bd6]' : 'text-gray-400'} />
+                    <span>Refer & Earn</span>
+                    <span className="absolute right-3 text-[9px] font-extrabold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md uppercase tracking-wider border border-amber-200">
+                        ৳100
+                    </span>
+                </Link>
+
+                <Link
                     href="/dashboard/support"
                     className={`flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm transition-all relative ${
                         pathname === '/dashboard/support' 
