@@ -1,5 +1,5 @@
 "use client";
-import { FiHome, FiBox, FiHelpCircle, FiUser, FiLogOut, FiLink, FiDollarSign, FiImage, FiCreditCard, FiScissors, FiFileText, FiGrid, FiFile, FiMail, FiGift } from 'react-icons/fi';
+import { FiHome, FiBox, FiHelpCircle, FiUser, FiLogOut, FiLink, FiDollarSign, FiImage, FiCreditCard, FiScissors, FiFileText, FiGrid, FiFile, FiMail, FiGift, FiPackage } from 'react-icons/fi';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
@@ -166,6 +166,21 @@ const Sidebar = ({ handleLogout }) => {
                 </div>
                 
                 <Link
+                    href="/dashboard/subscribe"
+                    className={`flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm transition-all relative ${
+                        pathname === '/dashboard/subscribe'
+                        ? 'bg-blue-50 text-[#1e6bd6] font-bold'
+                        : 'text-gray-500 hover:bg-gray-50 font-medium'
+                    }`}
+                >
+                    <FiPackage size={20} className={pathname === '/dashboard/subscribe' ? 'text-[#1e6bd6]' : 'text-gray-400'} />
+                    <span>Subscription</span>
+                    <span className="absolute right-3 text-[9px] font-extrabold bg-[#1e6bd6] text-white px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                        Upgrade
+                    </span>
+                </Link>
+
+                <Link
                     href="/dashboard/refer"
                     className={`flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm transition-all relative ${
                         pathname === '/dashboard/refer'
@@ -176,7 +191,7 @@ const Sidebar = ({ handleLogout }) => {
                     <FiGift size={20} className={pathname === '/dashboard/refer' ? 'text-[#1e6bd6]' : 'text-gray-400'} />
                     <span>Refer & Earn</span>
                     <span className="absolute right-3 text-[9px] font-extrabold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-md uppercase tracking-wider border border-amber-200">
-                        ৳100
+                        Earn
                     </span>
                 </Link>
 

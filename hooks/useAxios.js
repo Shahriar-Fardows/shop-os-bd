@@ -23,6 +23,23 @@ axiosInstance.interceptors.request.use(
   }
 );
 
+// Add a response interceptor to handle unauthorized access
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default function useAxios() {
     return axiosInstance;
 }

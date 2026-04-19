@@ -54,7 +54,7 @@ export default function AllLinksPage() {
 
         if (formValues) {
             try {
-                await api.post('/links/create', { ...formValues, type: 'Free' });
+                await api.post('/links', { ...formValues, type: 'free' });
                 fetchLinks();
                 Swal.fire({
                     title: 'Saved!',
@@ -113,7 +113,7 @@ export default function AllLinksPage() {
                                     <span className="bg-purple-50 text-purple-600 text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border border-purple-100">User Contribution</span>
                                 ) : (
                                     <span className={`text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border ${
-                                        link.type === 'Premium' ? 'bg-orange-50 text-orange-500 border-orange-100' : 'bg-emerald-50 text-emerald-500 border-emerald-100'
+                                        link.type === 'premium' ? 'bg-orange-50 text-orange-500 border-orange-100' : 'bg-emerald-50 text-emerald-500 border-emerald-100'
                                     }`}>
                                         Official {link.type}
                                     </span>

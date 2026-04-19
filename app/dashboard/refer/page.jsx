@@ -14,6 +14,7 @@ export default function ReferEarnPage() {
     const [stats, setStats] = useState({ totalReferred: 0, totalEarned: 0, pendingReward: 0, referredUsers: [] });
     const [loading, setLoading] = useState(true);
     const [copied, setCopied] = useState(false);
+    const [rewardConfig, setRewardConfig] = useState({ rewardPerReferral: 100, newUserDiscount: 10, bonusMonthAfterReferrals: 5, paymentNote: 'bKash / Nagad' });
 
     const loadUser = useCallback(() => {
         try {
@@ -27,17 +28,29 @@ export default function ReferEarnPage() {
             const res = await api.get('/referrals/my-stats');
             if (res.data?.data) setStats(res.data.data);
         } catch (e) {
-            // Gracefully degrade — backend may not exist yet
             console.log('Referral API not available, using defaults');
         } finally {
             setLoading(false);
         }
     }, [api]);
 
+    const fetchConfig = useCallback(async () => {
+        // Backend /platform-config (public endpoint)
+        try {
+            const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+            const res = await fetch(`${API}/platform-config`);
+            const j = await res.json();
+            if (j?.data?.referral) {
+                setRewardConfig(j.data.referral);
+            }
+        } catch { /* keep defaults */ }
+    }, []);
+
     useEffect(() => {
         loadUser();
         fetchStats();
-    }, [loadUser, fetchStats]);
+        fetchConfig();
+    }, [loadUser, fetchStats, fetchConfig]);
 
     // Generate deterministic referral code from user ID/email
     const referralCode = user
@@ -64,7 +77,7 @@ export default function ReferEarnPage() {
 
     const shareMessage = encodeURIComponent(
         `🎉 ShopOS BD — বাংলাদেশের প্রিন্ট ও কম্পিউটার শপের জন্য সেরা প্ল্যাটফর্ম!\n\n` +
-        `আমি ব্যবহার করি, আপনিও ট্রাই করুন। আমার রেফারেল কোড ব্যবহার করলে বিশেষ ছাড় পাবেন:\n\n` +
+        `আমি ব্যবহার করি, আপনিও ট্রাই করুন। আমার রেফারেল কোড ব্যবহার করলে ${rewardConfig.newUserDiscount}% ছাড় পাবেন:\n\n` +
         `কোড: ${referralCode}\nলিংক: ${referralLink}`
     );
 
@@ -188,8 +201,8 @@ export default function ReferEarnPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {[
                         { step: '1', title: 'Share Your Code', desc: 'Send your referral code or link to fellow shop owners via WhatsApp / Facebook.' },
-                        { step: '2', title: 'They Sign Up & Subscribe', desc: 'When they register using your code, they get 10% off — and you earn too.' },
-                        { step: '3', title: 'You Earn Rewards', desc: 'Get ৳100 cashback per referral + 1 extra month of subscription free.' },
+                        { step: '2', title: 'They Sign Up & Subscribe', desc: `When they register using your code, they get ${rewardConfig.newUserDiscount}% off their first subscription — and you earn too.` },
+                        { step: '3', title: 'You Earn Rewards', desc: `Get ৳${rewardConfig.rewardPerReferral} cashback per referral. After every ${rewardConfig.bonusMonthAfterReferrals} referrals, get 1 free month added to your plan.` },
                     ].map((s, i) => (
                         <div key={i} className="p-4 rounded-xl border border-gray-100 bg-gray-50/40">
                             <div className="w-8 h-8 rounded-lg bg-[#1e6bd6] text-white flex items-center justify-center font-extrabold text-sm mb-3">
@@ -266,10 +279,10 @@ export default function ReferEarnPage() {
                 <div className="flex-1">
                     <p className="text-sm font-extrabold text-amber-900 mb-1">Reward Structure</p>
                     <ul className="text-[11px] font-medium text-amber-800 space-y-1 leading-relaxed">
-                        <li>• <strong>৳100 cashback</strong> for every successful referral who subscribes</li>
-                        <li>• <strong>10% discount</strong> applied automatically to the referred user's first subscription</li>
-                        <li>• <strong>+1 free month</strong> added to your current plan after every 5 successful referrals</li>
-                        <li>• Payments processed monthly via bKash / Nagad to the mobile number on your profile</li>
+                        <li>• <strong>৳{rewardConfig.rewardPerReferral} cashback</strong> for every successful referral who subscribes</li>
+                        <li>• <strong>{rewardConfig.newUserDiscount}% discount</strong> applied automatically to the referred user's first subscription</li>
+                        <li>• <strong>+1 free month</strong> added to your current plan after every {rewardConfig.bonusMonthAfterReferrals} successful referrals</li>
+                        <li>• Payments processed monthly via {rewardConfig.paymentNote} to the mobile number on your profile</li>
                     </ul>
                 </div>
             </div>

@@ -485,6 +485,17 @@ export default function CVMakerPage() {
                                             Your CV preview is shown on the right. Click <strong>Print / Save PDF</strong> above or the button below to print.
                                         </p>
                                     </div>
+
+                                    <div className="bg-orange-50 border border-orange-100 rounded-xl p-4">
+                                        <div className="flex items-center gap-2">
+                                            <FiInfo className="text-orange-600" />
+                                            <span className="text-xs font-extrabold text-orange-700 uppercase tracking-widest">Print Tip</span>
+                                        </div>
+                                        <p className="text-[11px] font-bold text-orange-600 mt-2 leading-relaxed">
+                                            To remove the date and website link from the print, uncheck <strong>"Headers and footers"</strong> in your print settings (More settings).
+                                        </p>
+                                    </div>
+
                                     <button
                                         onClick={handlePrint}
                                         className="w-full py-3 rounded-xl bg-[#1e6bd6] hover:bg-[#1656ac] text-white text-xs font-extrabold uppercase tracking-widest shadow-sm shadow-blue-100 transition-all flex items-center justify-center gap-2"
@@ -530,231 +541,312 @@ export default function CVMakerPage() {
 
                 {/* CV Preview (A4) */}
                 <div className="cv-preview-wrapper flex justify-center">
-                    <div
-                        ref={previewRef}
-                        className="cv-sheet bg-white shadow-xl"
-                        style={{
-                            width: '210mm',
-                            minHeight: '297mm',
-                            padding: '18mm 18mm 18mm 18mm',
-                            fontFamily: 'Nunito, Arial, sans-serif',
-                            color: '#171717',
-                            fontSize: '11pt',
-                            lineHeight: 1.55,
-                        }}
-                    >
-                        {/* Header — 60% text / 40% photo, RESUME OF on its own line, name below */}
-                        <div style={{ display: 'flex', gap: '8mm', marginBottom: '10mm', alignItems: 'stretch' }}>
-                            <div style={{ width: '60%' }}>
-                                <div style={{
-                                    color: '#1e6bd6',
-                                    fontSize: '13pt',
-                                    fontWeight: 700,
-                                    letterSpacing: '3px',
-                                    marginBottom: '4pt',
-                                    textTransform: 'uppercase'
-                                }}>
-                                    Resume of
-                                </div>
-                                <h1 style={{
-                                    color: '#1e6bd6',
-                                    fontSize: '22pt',
-                                    fontWeight: 800,
-                                    letterSpacing: '-0.5px',
-                                    margin: '0 0 6pt 0',
-                                    lineHeight: 1.15,
-                                    wordBreak: 'break-word'
-                                }}>
-                                    {cv.name || '______'}
-                                </h1>
-                                <div style={{
-                                    height: '3px',
-                                    width: '60pt',
-                                    background: '#1e6bd6',
-                                    borderRadius: '2px',
-                                    marginBottom: '8pt'
-                                }} />
-                                <div style={{ fontSize: '10.5pt', lineHeight: 1.7 }}>
-                                    {cv.mailingAddress && (
-                                        <div><strong style={{ color: '#1e6bd6' }}>Address:</strong> {cv.mailingAddress}</div>
-                                    )}
-                                    {cv.contact && (
-                                        <div><strong style={{ color: '#1e6bd6' }}>Contact:</strong> {cv.contact}</div>
-                                    )}
-                                    {cv.email && (
-                                        <div><strong style={{ color: '#1e6bd6' }}>E-mail:</strong> {cv.email}</div>
-                                    )}
-                                </div>
-                            </div>
-                            <div style={{ width: '40%', display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start' }}>
-                                {cv.photo ? (
-                                    <img
-                                        src={cv.photo}
-                                        alt="Photo"
+                    {/* 
+                        PRINT TABLE HACK: 
+                        We use a table structure for printing because thead/tfoot repeat on every page.
+                        Combined with @page { margin: 0 }, this allows us to have top/bottom margins 
+                        on every page WITHOUT the browser's date/url headers appearing.
+                    */}
+                    <table className="print-container-table">
+                        <thead className="print-only">
+                            <tr><td><div className="print-page-header-space" /></td></tr>
+                        </thead>
+                        
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div
+                                        ref={previewRef}
+                                        className="cv-sheet bg-white shadow-xl"
                                         style={{
-                                            width: '38mm',
-                                            height: '48mm',
-                                            objectFit: 'cover',
-                                            border: '2px solid #1e6bd6',
-                                            borderRadius: '4px',
-                                            boxShadow: '0 2px 4px rgba(30,107,214,0.15)'
+                                            width: '210mm',
+                                            minHeight: '297mm',
+                                            padding: '16mm',
+                                            fontFamily: 'Nunito, Arial, sans-serif',
+                                            color: '#171717',
+                                            fontSize: '11pt',
+                                            lineHeight: 1.55,
                                         }}
-                                    />
-                                ) : (
-                                    <div style={{
-                                        width: '38mm',
-                                        height: '48mm',
-                                        border: '2px dashed #dbeafe',
-                                        borderRadius: '4px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        color: '#93c5fd',
-                                        fontSize: '9pt',
-                                        fontWeight: 700,
-                                        textAlign: 'center',
-                                        padding: '4pt'
-                                    }}>
-                                        Photo<br />38×48mm
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <CVSection title="CAREER OBJECTIVE">
-                            <p style={{ margin: 0, textAlign: 'justify' }}>{cv.objective}</p>
-                        </CVSection>
-
-                        <CVSection title="ACADEMIC BACKGROUND">
-                            {cv.academic.map((a, i) => (
-                                <div key={i} style={{ marginBottom: '10pt', breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-                                    <div style={{ marginBottom: '4pt' }}>
-                                        <Tick /> <strong>{a.level || '______'}</strong>
-                                    </div>
-                                    <div style={{ paddingLeft: '22pt', fontSize: '10.5pt' }}>
-                                        <CVField label="Institution" value={a.institution} />
-                                        <CVField label="GPA" value={a.gpa} />
-                                        <CVField label="Year" value={a.year} />
-                                        <CVField label="Board" value={a.board} />
-                                    </div>
-                                </div>
-                            ))}
-                        </CVSection>
-
-                        {cv.workExperience.length > 0 && (
-                            <CVSection title="WORK EXPERIENCE">
-                                {cv.workExperience.map((x, i) => (
-                                    <div key={i} style={{ marginBottom: '10pt', breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2pt' }}>
-                                            <strong style={{ fontSize: '11pt' }}>{x.position || '—'}</strong>
-                                            <span style={{ fontSize: '10pt', color: '#6b7280', fontStyle: 'italic' }}>{x.duration}</span>
-                                        </div>
-                                        {x.company && (
-                                            <div style={{ fontSize: '10.5pt', color: '#1e6bd6', fontWeight: 600, marginBottom: '3pt' }}>
-                                                {x.company}
+                                    >
+                                        {/* Header — 60% text / 40% photo, RESUME OF on its own line, name below */}
+                                        <div style={{ display: 'flex', gap: '8mm', marginBottom: '10mm', alignItems: 'stretch' }}>
+                                            <div style={{ width: '80%' }}>
+                                                <div style={{
+                                                    color: '#1e6bd6',
+                                                    fontSize: '13pt',
+                                                    fontWeight: 700,
+                                                    letterSpacing: '3px',
+                                                    marginBottom: '4pt',
+                                                    textTransform: 'uppercase'
+                                                }}>
+                                                    Resume of
+                                                </div>
+                                                <h1 style={{
+                                                    color: '#1e6bd6',
+                                                    fontSize: '22pt',
+                                                    fontWeight: 800,
+                                                    letterSpacing: '-0.5px',
+                                                    margin: '0 0 6pt 0',
+                                                    lineHeight: 1.15,
+                                                    wordBreak: 'break-word'
+                                                }}>
+                                                    {cv.name || '______'}
+                                                </h1>
+                                                <div style={{
+                                                    height: '3px',
+                                                    width: '60pt',
+                                                    background: '#1e6bd6',
+                                                    borderRadius: '2px',
+                                                    marginBottom: '8pt'
+                                                }} />
+                                                <div style={{ fontSize: '10.5pt', lineHeight: 1.7 }}>
+                                                    {cv.mailingAddress && (
+                                                        <div><strong style={{ color: '#1e6bd6' }}>Address:</strong> {cv.mailingAddress}</div>
+                                                    )}
+                                                    {cv.contact && (
+                                                        <div><strong style={{ color: '#1e6bd6' }}>Contact:</strong> {cv.contact}</div>
+                                                    )}
+                                                    {cv.email && (
+                                                        <div><strong style={{ color: '#1e6bd6' }}>E-mail:</strong> {cv.email}</div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        )}
-                                        {x.description && (
-                                            <div style={{ fontSize: '10pt', textAlign: 'justify', paddingLeft: '10pt' }}>
-                                                {x.description}
+                                            <div style={{ width: '40%', display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start' }}>
+                                                {cv.photo ? (
+                                                    <img
+                                                        src={cv.photo}
+                                                        alt="Photo"
+                                                        style={{
+                                                            width: '38mm',
+                                                            height: '48mm',
+                                                            objectFit: 'cover',
+                                                            border: '2px solid #1e6bd6',
+                                                            borderRadius: '4px',
+                                                            boxShadow: '0 2px 4px rgba(30,107,214,0.15)'
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div style={{
+                                                        width: '38mm',
+                                                        height: '48mm',
+                                                        border: '2px dashed #dbeafe',
+                                                        borderRadius: '4px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        color: '#93c5fd',
+                                                        fontSize: '9pt',
+                                                        fontWeight: 700,
+                                                        textAlign: 'center',
+                                                        padding: '4pt'
+                                                    }}>
+                                                        Photo<br />38×48mm
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </CVSection>
-                        )}
-
-                        <CVSection title="LANGUAGE SKILLS">
-                            {cv.languages.map((l, i) => (
-                                <div key={i} style={{ marginBottom: '3pt' }}>
-                                    <Tick /> {l}
-                                </div>
-                            ))}
-                        </CVSection>
-
-                        <CVSection title="PERSONAL DETAILS">
-                            <div style={{ fontSize: '10.5pt' }}>
-                                <CVField label="Father's Name" value={cv.personal.fatherName} />
-                                <CVField label="Mother's Name" value={cv.personal.motherName} />
-                                {(cv.personal.permVillage || cv.personal.permPostOffice || cv.personal.permPoliceStation || cv.personal.permDistrict) && (
-                                    <div style={{ display: 'flex', marginBottom: '3pt', breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-                                        <span style={{ width: '140pt', fontWeight: 600 }}>Permanent Address</span>
-                                        <span style={{ marginRight: '8pt' }}>:</span>
-                                        <div>
-                                            {cv.personal.permVillage && <div>Village &nbsp;&nbsp; - {cv.personal.permVillage},</div>}
-                                            {cv.personal.permPostOffice && <div>Post Office &nbsp; - {cv.personal.permPostOffice},</div>}
-                                            {cv.personal.permPoliceStation && <div>Police Station - {cv.personal.permPoliceStation},</div>}
-                                            {cv.personal.permDistrict && <div>District &nbsp;&nbsp; - {cv.personal.permDistrict}.</div>}
                                         </div>
+
+                                        <CVSection title="CAREER OBJECTIVE">
+                                            <p style={{ margin: 0, textAlign: 'justify' }}>{cv.objective}</p>
+                                        </CVSection>
+
+                                        <CVSection title="ACADEMIC BACKGROUND">
+                                            {cv.academic.map((a, i) => (
+                                                <div key={i} className="cv-row-keep" style={{ marginBottom: '10pt' }}>
+                                                    <div style={{ marginBottom: '4pt' }}>
+                                                        <Tick /> <strong>{a.level || '______'}</strong>
+                                                    </div>
+                                                    <div style={{ paddingLeft: '22pt', fontSize: '10.5pt' }}>
+                                                        <CVField label="Institution" value={a.institution} />
+                                                        <CVField label="GPA" value={a.gpa} />
+                                                        <CVField label="Year" value={a.year} />
+                                                        <CVField label="Board" value={a.board} />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </CVSection>
+
+                                        {cv.workExperience.length > 0 && (
+                                            <CVSection title="WORK EXPERIENCE">
+                                                {cv.workExperience.map((x, i) => (
+                                                    <div key={i} className="cv-row-keep" style={{ marginBottom: '10pt' }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2pt' }}>
+                                                            <strong style={{ fontSize: '11pt' }}>{x.position || '—'}</strong>
+                                                            <span style={{ fontSize: '10pt', color: '#6b7280', fontStyle: 'italic' }}>{x.duration}</span>
+                                                        </div>
+                                                        {x.company && (
+                                                            <div style={{ fontSize: '10.5pt', color: '#1e6bd6', fontWeight: 600, marginBottom: '3pt' }}>
+                                                                {x.company}
+                                                            </div>
+                                                        )}
+                                                        {x.description && (
+                                                            <div style={{ fontSize: '10pt', textAlign: 'justify', paddingLeft: '10pt' }}>
+                                                                {x.description}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </CVSection>
+                                        )}
+
+                                        <CVSection title="LANGUAGE SKILLS">
+                                            {cv.languages.map((l, i) => (
+                                                <div key={i} style={{ marginBottom: '3pt' }}>
+                                                    <Tick /> {l}
+                                                </div>
+                                            ))}
+                                        </CVSection>
+
+                                        <CVSection title="PERSONAL DETAILS">
+                                            <div style={{ fontSize: '10.5pt' }}>
+                                                <CVField label="Father's Name" value={cv.personal.fatherName} />
+                                                <CVField label="Mother's Name" value={cv.personal.motherName} />
+                                                {(cv.personal.permVillage || cv.personal.permPostOffice || cv.personal.permPoliceStation || cv.personal.permDistrict) && (
+                                                    <div className="cv-row-keep" style={{ display: 'flex', marginBottom: '3pt' }}>
+                                                        <span style={{ width: '140pt', fontWeight: 600 }}>Permanent Address</span>
+                                                        <span style={{ marginRight: '8pt' }}>:</span>
+                                                        <div>
+                                                            {cv.personal.permVillage && <div>Village &nbsp;&nbsp; - {cv.personal.permVillage},</div>}
+                                                            {cv.personal.permPostOffice && <div>Post Office &nbsp; - {cv.personal.permPostOffice},</div>}
+                                                            {cv.personal.permPoliceStation && <div>Police Station - {cv.personal.permPoliceStation},</div>}
+                                                            {cv.personal.permDistrict && <div>District &nbsp;&nbsp; - {cv.personal.permDistrict}.</div>}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                <CVField label="Date of Birth" value={cv.personal.dob} />
+                                                <CVField label="Gender" value={cv.personal.gender} />
+                                                <CVField label="Marital Status" value={cv.personal.maritalStatus} />
+                                                <CVField label="Nationality" value={cv.personal.nationality} />
+                                                <CVField label="Religion" value={cv.personal.religion} />
+                                                <CVField label="Present Address" value={cv.personal.presentAddress} />
+                                            </div>
+                                        </CVSection>
+
+                                        <CVSection title="SKILLS">
+                                            {cv.computerSkills.map((s, i) => (
+                                                <div key={i} className="cv-row-keep" style={{ marginBottom: '3pt', display: 'flex' }}>
+                                                    <Tick />
+                                                    <span style={{ width: '140pt', fontWeight: 600 }}>{s.label}</span>
+                                                    <span style={{ marginRight: '8pt' }}>:</span>
+                                                    <span>{s.value}</span>
+                                                </div>
+                                            ))}
+                                        </CVSection>
+
+                                        <CVSection title="PERSONAL SKILLS">
+                                            {cv.personalSkills.map((s, i) => (
+                                                <div key={i} style={{ marginBottom: '3pt' }}>
+                                                    <Tick /> {s}
+                                                </div>
+                                            ))}
+                                        </CVSection>
                                     </div>
-                                )}
-                                <CVField label="Date of Birth" value={cv.personal.dob} />
-                                <CVField label="Gender" value={cv.personal.gender} />
-                                <CVField label="Marital Status" value={cv.personal.maritalStatus} />
-                                <CVField label="Nationality" value={cv.personal.nationality} />
-                                <CVField label="Religion" value={cv.personal.religion} />
-                                <CVField label="Present Address" value={cv.personal.presentAddress} />
-                            </div>
-                        </CVSection>
-
-                        <CVSection title="SKILLS">
-                            {cv.computerSkills.map((s, i) => (
-                                <div key={i} style={{ marginBottom: '3pt', display: 'flex', breakInside: 'avoid' }}>
-                                    <Tick />
-                                    <span style={{ width: '140pt', fontWeight: 600 }}>{s.label}</span>
-                                    <span style={{ marginRight: '8pt' }}>:</span>
-                                    <span>{s.value}</span>
-                                </div>
-                            ))}
-                        </CVSection>
-
-                        <CVSection title="PERSONAL SKILLS">
-                            {cv.personalSkills.map((s, i) => (
-                                <div key={i} style={{ marginBottom: '3pt' }}>
-                                    <Tick /> {s}
-                                </div>
-                            ))}
-                        </CVSection>
-                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                        
+                        <tfoot className="print-only">
+                            <tr><td><div className="print-page-footer-space" /></td></tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
 
-            <style jsx global>{`
-                @media print {
-                    @page {
-                        size: A4;
-                        margin: 18mm 18mm 18mm 18mm;
-                    }
-                    html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
-                    .no-print { display: none !important; }
-                    .cv-preview-wrapper { display: block !important; }
-                    .cv-sheet {
-                        box-shadow: none !important;
-                        width: 100% !important;
-                        min-height: unset !important;
-                        margin: 0 !important;
-                        padding: 0 !important;
-                        position: static !important;
-                    }
-                    .cv-sheet h1, .cv-sheet h2 {
-                        page-break-after: avoid;
-                        break-after: avoid;
-                    }
-                    .cv-section-block {
-                        page-break-inside: avoid;
-                        break-inside: avoid;
-                    }
-                    aside, header { display: none !important; }
-                    body * { visibility: hidden; }
-                    .cv-sheet, .cv-sheet * { visibility: visible; }
-                    .cv-sheet { position: absolute; top: 0; left: 0; }
-                }
-            `}</style>
+           <style jsx global>{`
+    /* Hide table structure in screen preview */
+    .print-only { display: none; }
+
+    @media print {
+        @page {
+            size: A4;
+            margin: 0.5rem; /* cleaner, balanced margin on all sides */
+        }
+
+        .print-only { display: table-header-group; }
+        tfoot.print-only { display: table-footer-group; }
+
+        .print-page-header-space { height: 12mm; }
+        .print-page-footer-space { height: 12mm; }
+
+        /*
+           FIX MULTI-PAGE PRINTING
+        */
+        html, body, body > div, main, .flex-1, .h-screen, .overflow-hidden, .overflow-y-auto {
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
+            position: static !important;
+            background: #fff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Hide dashboard UI */
+        .no-print,
+        aside,
+        header,
+        nav,
+        [class*="sidebar" i],
+        [class*="topbar" i] {
+            display: none !important;
+        }
+
+        /* Reset layout */
+        .cv-preview-wrapper {
+            display: block !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .print-container-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        /* MAIN SHEET */
+        .cv-sheet {
+            box-shadow: none !important;
+            border: 0 !important;
+            width: 100% !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important; /* removed large side padding */
+            position: static !important;
+        }
+
+        /* Keep headings with content */
+        .cv-sheet h1,
+        .cv-sheet h2 {
+            page-break-after: avoid;
+            break-after: avoid-page;
+        }
+
+        /* Prevent section breaking */
+        .cv-section-block {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+        }
+
+        /* Prevent row breaking */
+        .cv-row-keep {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        /* Exact color printing */
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+    }
+`}</style>
         </div>
     );
 }
 
-const inputClass = "w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 focus:border-[#1e6bd6] focus:ring-2 focus:ring-blue-50 outline-none transition-all";
+const inputClass = "w-full px-2 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 focus:border-[#1e6bd6] focus:ring-2 focus:ring-blue-50 outline-none transition-all";
 
 function Field({ label, children }) {
     return (
@@ -789,7 +881,7 @@ function CVSection({ title, children }) {
 function CVField({ label, value }) {
     if (!value) return null;
     return (
-        <div style={{ display: 'flex', marginBottom: '3pt', breakInside: 'avoid' }}>
+        <div className="cv-row-keep" style={{ display: 'flex', marginBottom: '3pt' }}>
             <span style={{ width: '140pt', fontWeight: 600 }}>{label}</span>
             <span style={{ marginRight: '8pt' }}>:</span>
             <span style={{ flex: 1 }}>{value}</span>
