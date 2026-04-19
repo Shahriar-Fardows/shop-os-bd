@@ -127,7 +127,7 @@ export default function DashboardPage() {
                         Your complete computer shop console
                     </p>
                 </div>
-                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-100 shadow-sm">
+                <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-50 border border-emerald-100 shadow-sm">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse ring-4 ring-emerald-50"></span>
                     <span className="text-xs font-extrabold text-emerald-600 uppercase tracking-widest">System Online</span>
                 </div>
@@ -141,7 +141,7 @@ export default function DashboardPage() {
                     { label: 'AI Tools', value: '2', sub: 'Browser-based AI', accent: 'blue' },
                     { label: 'Free Tools', value: '100%', sub: 'No extra charges', accent: 'blue' },
                 ].map((s, i) => (
-                    <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                    <div key={i} className="bg-white rounded-lg p-5 border border-gray-100 shadow-sm">
                         <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">{s.label}</p>
                         <h3 className="text-2xl font-extrabold text-[#1e6bd6] mt-1.5 leading-none">{s.value}</h3>
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">{s.sub}</p>
@@ -162,10 +162,10 @@ export default function DashboardPage() {
                             <Link
                                 key={t.href}
                                 href={t.href}
-                                className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:border-blue-200 hover:shadow-md hover:shadow-blue-50 transition-all group flex flex-col gap-4"
+                                className="bg-white rounded-lg p-5 border border-gray-100 shadow-sm hover:border-blue-200 hover:shadow-md hover:shadow-blue-50 transition-all group flex flex-col gap-4"
                             >
                                 <div className="flex items-start justify-between">
-                                    <div className="w-11 h-11 rounded-xl bg-blue-50 text-[#1e6bd6] flex items-center justify-center border border-blue-100 shadow-sm group-hover:scale-110 transition-transform">
+                                    <div className="w-11 h-11 rounded-lg bg-blue-50 text-[#1e6bd6] flex items-center justify-center border border-blue-100 shadow-sm group-hover:scale-110 transition-transform">
                                         <Icon size={20} />
                                     </div>
                                     <span className="text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-lg bg-blue-50 text-[#1e6bd6] border border-blue-100">
@@ -194,8 +194,8 @@ export default function DashboardPage() {
                     {highlights.map((h, i) => {
                         const Icon = h.icon;
                         const inner = (
-                            <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:border-blue-200 hover:shadow-md hover:shadow-blue-50 transition-all flex items-start gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#1e6bd6] flex items-center justify-center border border-blue-100 shadow-sm shrink-0">
+                            <div className="bg-white rounded-lg p-5 border border-gray-100 shadow-sm hover:border-blue-200 hover:shadow-md hover:shadow-blue-50 transition-all flex items-start gap-4">
+                                <div className="w-10 h-10 rounded-lg bg-blue-50 text-[#1e6bd6] flex items-center justify-center border border-blue-100 shadow-sm shrink-0">
                                     <Icon size={18} />
                                 </div>
                                 <div>
@@ -214,8 +214,8 @@ export default function DashboardPage() {
             </div>
 
             {/* Quick Access Banner */}
-            <div className="bg-[#1e6bd6] rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-5 shadow-xl shadow-blue-100">
-                <div className="w-12 h-12 rounded-xl bg-white/10 text-white flex items-center justify-center shrink-0 border border-white/20">
+            <div className="bg-[#1e6bd6] rounded-lg p-6 flex flex-col sm:flex-row items-start sm:items-center gap-5 shadow-xl shadow-blue-100">
+                <div className="w-12 h-12 rounded-lg bg-white/10 text-white flex items-center justify-center shrink-0 border border-white/20">
                     <FiActivity size={22} />
                 </div>
                 <div className="flex-1">
@@ -226,7 +226,7 @@ export default function DashboardPage() {
                 </div>
                 <Link
                     href="/dashboard/image-edit"
-                    className="shrink-0 px-5 py-2.5 rounded-xl bg-white text-[#1e6bd6] font-extrabold text-xs uppercase tracking-widest shadow-sm hover:bg-blue-50 transition-all flex items-center gap-2"
+                    className="shrink-0 px-5 py-2.5 rounded-lg bg-white text-[#1e6bd6] font-extrabold text-xs uppercase tracking-widest shadow-sm hover:bg-blue-50 transition-all flex items-center gap-2"
                 >
                     Start Editing <FiArrowRight size={14} />
                 </Link>

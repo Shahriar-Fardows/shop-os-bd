@@ -79,7 +79,7 @@ function RegisterInner() {
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-6 font-nunito">
-      <div className="container mx-auto max-w-md w-full bg-white rounded-3xl auth-card border border-gray-100 p-8">
+      <div className="container mx-auto max-w-md w-full bg-white rounded-lg auth-card border border-gray-100 p-8">
         <div className="text-center mb-8">
           <img src="/shoposbd.png" alt="Logo" className="w-16 h-16 mx-auto mb-6" />
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Create an account</h1>
@@ -88,8 +88,8 @@ function RegisterInner() {
 
         {/* Referral banner */}
         {formData.referralCode && refInfo && (
-          <div className="mb-6 p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 border border-amber-200 flex items-center justify-center shrink-0">
+          <div className="mb-6 p-3 rounded-lg bg-amber-50 border border-amber-200 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 border border-amber-200 flex items-center justify-center shrink-0">
               <FiGift size={18} />
             </div>
             <div>

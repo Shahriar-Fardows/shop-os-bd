@@ -32,10 +32,18 @@ function SubscribeContent() {
     const [txId,       setTxId]       = useState('');
     const [phone,      setPhone]      = useState('');
 
-    /* ── load user from localStorage ── */
+    /* ── load user (from localStorage, then refresh via /me so we have latest plan) ── */
     useEffect(() => {
         try { const u = localStorage.getItem('user'); if (u) setUser(JSON.parse(u)); } catch {}
-    }, []);
+        api.get('/client-auth/me')
+            .then(res => {
+                if (res.data?.data) {
+                    setUser(res.data.data);
+                    localStorage.setItem('user', JSON.stringify(res.data.data));
+                }
+            })
+            .catch(() => {});
+    }, [api]);
 
     /* ── load plans + payment config ── */
     const loadAll = useCallback(async () => {
@@ -145,9 +153,9 @@ function SubscribeContent() {
             </div>
             <h2 className="text-2xl font-extrabold text-gray-900">পেমেন্ট সাবমিট!</h2>
             <p className="text-sm font-medium text-gray-500 leading-relaxed">
-                Admin অনুমোদন করার পর আপনার সাবস্ক্রিপশন সক্রিয় হবে। সাধারণত ১–৬ ঘণ্টার মধ্যে।
+                Admin অনুমোদন করার পর আপনার সাবস্ক্রিপশন সক্রিয় হবে। সাধারণত ১–2 ঘণ্টার মধ্যে।
             </p>
-            <div className="bg-gray-50 rounded-2xl p-4 text-left border border-gray-100 space-y-2 text-[12px]">
+            <div className="bg-gray-50 rounded-lg p-4 text-left border border-gray-100 space-y-2 text-[12px]">
                 {[
                     ['প্ল্যান', plan?.name],
                     ['পরিমাণ', `৳${plan?.price}`],
@@ -162,7 +170,7 @@ function SubscribeContent() {
                 ))}
             </div>
             <button onClick={() => router.push('/dashboard')}
-                    className="w-full py-3 rounded-2xl bg-[#1e6bd6] text-white font-extrabold text-sm uppercase tracking-widest hover:bg-[#1656ac] flex items-center justify-center gap-2">
+                    className="w-full py-3 rounded-lg bg-[#1e6bd6] text-white font-extrabold text-sm uppercase tracking-widest hover:bg-[#1656ac] flex items-center justify-center gap-2">
                 ড্যাশবোর্ড <FiArrowRight size={15} />
             </button>
         </div>
@@ -171,6 +179,10 @@ function SubscribeContent() {
     /* ═══════════════════════════════════════════════════════════
        STEP: PICK PLAN
     ═══════════════════════════════════════════════════════════ */
+    const activePlanId = user?.currentPackage?._id || user?.currentPackage;
+    const activeExpires = user?.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt) : null;
+    const isPaidActive = user?.planType === 'paid' && activeExpires && activeExpires > new Date();
+
     if (step === 'pick') return (
         <div className="space-y-6 pb-10">
             <div>
@@ -178,27 +190,64 @@ function SubscribeContent() {
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">একটি প্ল্যান বেছে নিন এবং পেমেন্ট করুন</p>
             </div>
 
+            {/* Current Active Plan Banner */}
+            {isPaidActive && (
+                <div className="bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 rounded-lg p-5 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-emerald-500 text-white flex items-center justify-center shadow-sm shadow-emerald-200 shrink-0">
+                        <FiCheckCircle size={22} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                            <p className="text-sm font-extrabold text-emerald-700">
+                                {user?.currentPackage?.name || 'Paid Plan'} — সক্রিয়
+                            </p>
+                            <span className="text-[9px] font-extrabold bg-emerald-500 text-white px-1.5 py-0.5 rounded uppercase tracking-widest">
+                                Active
+                            </span>
+                        </div>
+                        <p className="text-[11px] font-bold text-gray-500">
+                            মেয়াদ শেষ হবে: {activeExpires.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {plans.length === 0 ? (
-                <div className="py-20 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                <div className="py-20 text-center bg-gray-50 rounded-lg border border-dashed border-gray-200">
                     <FiPackage className="mx-auto text-gray-300 mb-3" size={36} />
                     <p className="text-sm font-extrabold text-gray-500">কোনো প্ল্যান পাওয়া যায়নি</p>
                     <p className="text-[11px] text-gray-400 mt-1">Admin প্ল্যান যোগ করলে এখানে দেখাবে</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {plans.map((p) => (
+                    {plans.map((p) => {
+                        const isCurrent = String(activePlanId) === String(p._id) && isPaidActive;
+                        return (
                         <div key={p._id}
-                             className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all flex flex-col overflow-hidden">
+                             className={`bg-white rounded-lg border shadow-sm hover:shadow-md transition-all flex flex-col overflow-hidden relative ${
+                                 isCurrent
+                                     ? 'border-emerald-400 ring-2 ring-emerald-100'
+                                     : 'border-gray-100 hover:border-blue-200'
+                             }`}>
+                            {isCurrent && (
+                                <div className="absolute top-3 right-3 text-[9px] font-extrabold bg-emerald-500 text-white px-2 py-1 rounded-md uppercase tracking-widest shadow-sm">
+                                    Current Plan
+                                </div>
+                            )}
                             <div className="p-5 flex-1">
                                 <div className="flex items-start justify-between mb-3">
-                                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#1e6bd6] border border-blue-100 flex items-center justify-center">
+                                    <div className={`w-10 h-10 rounded-lg border flex items-center justify-center ${
+                                        isCurrent
+                                            ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                            : 'bg-blue-50 text-[#1e6bd6] border-blue-100'
+                                    }`}>
                                         <FiPackage size={18} />
                                     </div>
                                 </div>
                                 <h3 className="text-base font-extrabold text-gray-800 mb-1">{p.name}</h3>
                                 <p className="text-[11px] font-medium text-gray-500 mb-4 leading-relaxed">{p.description}</p>
                                 <div className="flex items-baseline gap-1 mb-4">
-                                    <span className="text-3xl font-extrabold text-[#1e6bd6]">৳{p.price}</span>
+                                    <span className={`text-3xl font-extrabold ${isCurrent ? 'text-emerald-600' : 'text-[#1e6bd6]'}`}>৳{p.price}</span>
                                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                                         / {p.durationInMonths === 1 ? 'মাস' : p.durationInMonths === 12 ? 'বছর' : `${p.durationInMonths} মাস`}
                                     </span>
@@ -214,12 +263,17 @@ function SubscribeContent() {
                             </div>
                             <div className="p-4 border-t border-gray-100">
                                 <button onClick={() => selectPlan(p)}
-                                        className="w-full py-2.5 rounded-xl bg-[#1e6bd6] text-white font-extrabold text-xs uppercase tracking-widest hover:bg-[#1656ac] flex items-center justify-center gap-2 transition-all shadow-sm shadow-blue-100">
-                                    এই প্ল্যান নিন <FiArrowRight size={13} />
+                                        className={`w-full py-2.5 rounded-lg font-extrabold text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
+                                            isCurrent
+                                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                                                : 'bg-[#1e6bd6] text-white hover:bg-[#1656ac] shadow-sm shadow-blue-100'
+                                        }`}>
+                                    {isCurrent ? 'মেয়াদ বাড়ান' : 'এই প্ল্যান নিন'} <FiArrowRight size={13} />
                                 </button>
                             </div>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>
@@ -230,7 +284,7 @@ function SubscribeContent() {
     ═══════════════════════════════════════════════════════════ */
     return (
         <div className="flex items-start justify-center pb-10">
-            <div className="w-full max-w-sm">
+            <div className="w-full max-w-[38rem]">
 
                 {/* Back button */}
                 {!urlPlanId && (
@@ -268,7 +322,7 @@ function SubscribeContent() {
                     {plan && (
                         <div className="flex items-center justify-between px-5 py-4 bg-gray-50 border-b border-gray-100">
                             <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                                <div className="w-9 h-9 rounded-lg flex items-center justify-center"
                                      style={{ background: brand.light, color: brand.primary }}>
                                     <FiPackage size={17} />
                                 </div>
@@ -299,7 +353,7 @@ function SubscribeContent() {
                             value={txId}
                             onChange={e => setTxId(e.target.value.toUpperCase())}
                             placeholder="ট্র্যান্সেকশন আইডি দিন"
-                            className="w-full px-4 py-3 rounded-xl bg-white text-sm font-extrabold text-gray-800 tracking-widest outline-none placeholder:font-medium placeholder:text-gray-400 mb-4"
+                            className="w-full px-4 py-3 rounded-lg bg-white text-sm font-extrabold text-gray-800 tracking-widest outline-none placeholder:font-medium placeholder:text-gray-400 mb-4"
                             style={{ border: `2px solid ${brand.primary}` }}
                         />
 
@@ -309,11 +363,11 @@ function SubscribeContent() {
                             value={phone}
                             onChange={e => setPhone(e.target.value)}
                             placeholder="আপনার মোবাইল নম্বর (01XXXXXXXXX)"
-                            className="w-full px-4 py-3 rounded-xl bg-white text-sm font-bold text-gray-700 outline-none placeholder:font-medium placeholder:text-gray-400 mb-4"
+                            className="w-full px-4 py-3 rounded-lg bg-white text-sm font-bold text-gray-700 outline-none placeholder:font-medium placeholder:text-gray-400 mb-4"
                         />
 
                         {/* Instructions list */}
-                        <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                        <div className="rounded-lg overflow-hidden" style={{ background: 'rgba(255,255,255,0.15)' }}>
                             {[
                                 <>
                                     <span className="text-white">{brand.dial} ডায়াল করুন অথবা {brand.name} অ্যাপে যান।</span>

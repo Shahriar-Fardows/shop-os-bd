@@ -39,7 +39,7 @@ export default function ClientLogin() {
 
   return (
     <div className="min-h-screen bg-[#fafafa] flex items-center justify-center p-6">
-      <div className="max-w-md w-full bg-white rounded-3xl auth-card border border-gray-100 p-10">
+      <div className="max-w-md w-full bg-white rounded-lg auth-card border border-gray-100 p-10">
         <div className="text-center mb-10">
           <img src="/shoposbd.png" alt="Logo" className="w-16 h-16 mx-auto mb-4" />
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Welcome Back</h1>
