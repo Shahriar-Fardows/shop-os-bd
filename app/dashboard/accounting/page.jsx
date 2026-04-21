@@ -112,6 +112,39 @@ export default function UnifiedBlueAccountsHub() {
         }
     };
 
+    const handleSmartPay = async (customerName, transactions) => {
+        const totalDue = transactions.reduce((s, t) => s + (t.dueAmount || 0), 0);
+        const { value: amount } = await Swal.fire({
+            title: `<span class="font-nunito font-black text-xl text-[#1e6bd6]">PAYMENT: ${customerName}</span>`,
+            input: 'number',
+            inputLabel: `Total Outstanding: ৳${totalDue}`,
+            confirmButtonText: 'Apply Payment',
+            confirmButtonColor: '#1e6bd6',
+            showCancelButton: true,
+            allowOutsideClick: false,
+            showCloseButton: true
+        });
+
+        if (amount) {
+            let remaining = Number(amount);
+            const sorted = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date)); // Oldest first
+            
+            try {
+                Swal.fire({ title: 'Applying Payment...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+                for (const t of sorted) {
+                    if (remaining <= 0) break;
+                    const pay = Math.min(remaining, t.dueAmount);
+                    await api.patch(`/accounting/update-payment/${t._id}`, { addAmount: pay });
+                    remaining -= pay;
+                }
+                fetchData();
+                Swal.fire('Success', `৳${amount} applied to ${customerName}'s account.`, 'success');
+            } catch (error) {
+                Swal.fire('Error', 'Bulk payment failed halfway. Please check records.', 'error');
+            }
+        }
+    };
+
     const handleQuickAdd = async (type) => {
         const { value: val } = await Swal.fire({
             title: `Record ${type}`,
@@ -182,6 +215,27 @@ export default function UnifiedBlueAccountsHub() {
         });
     };
 
+    const groupedBaki = Object.values(transactions.filter(t => t.dueAmount > 0).reduce((acc, t) => {
+        const key = t.customerMobile || t.customerName || 'Standard Client';
+        if (!acc[key]) {
+            acc[key] = {
+                name: t.customerName || 'Standard Client',
+                mobile: t.customerMobile || 'N/A',
+                totalBill: 0,
+                dueAmount: 0,
+                count: 0,
+                lastId: t._id,
+                allTransactions: []
+            };
+        }
+        acc[key].totalBill += (t.totalBill || 0);
+        acc[key].dueAmount += (t.dueAmount || 0);
+        acc[key].count += 1;
+        acc[key].lastId = t._id; // Most recent for quick cut
+        acc[key].allTransactions.push(t);
+        return acc;
+    }, {}));
+
     const inc = transactions.filter(t => t.type !== 'Expense').reduce((s, t) => s + (t.amount || 0), 0);
     const exp = transactions.filter(t => t.type === 'Expense').reduce((s, t) => s + (t.amount || 0), 0);
     const baki = transactions.reduce((s, t) => s + (t.dueAmount || 0), 0);
@@ -190,7 +244,7 @@ export default function UnifiedBlueAccountsHub() {
     transactions.forEach(t => {
         const k = `${new Date(t.date).toLocaleString('en-US', { month: 'long' })} ${new Date(t.date).getFullYear()}`;
         if (!monthly[k]) monthly[k] = { inc: 0, exp: 0, bak: 0 };
-        if (t.type !== 'Expense') monthly[k].inc += t.amount; else monthly[k].exp += t.amount;
+        if (t.type !== 'Expense') monthly[k].inc += (t.amount || 0); else monthly[k].exp += (t.amount || 0);
         monthly[k].bak += (t.dueAmount || 0);
     });
 
@@ -223,7 +277,7 @@ export default function UnifiedBlueAccountsHub() {
                 ))}
             </div>
 
-            {loading ? <div className="animate-pulse space-y-4">{[1,2,3].map(i => <div key={i} className="h-20 bg-gray-50 rounded-2xl" />)}</div> : (
+            {loading ? <div className="animate-pulse space-y-4">{[1,2,3].map(i => <div key={i} className="h-20 bg-gray-50 rounded-lg" />)}</div> : (
                 <>
                     {/* Daily Ledger Tab */}
                     {activeTab === 'daily' && (
@@ -254,40 +308,57 @@ export default function UnifiedBlueAccountsHub() {
                         </div>
                     )}
 
-                    {/* Customer Bakī Tab (DUAL BUTTONS) */}
+                    {/* Customer Bakī Tab (GROUPED) */}
                     {activeTab === 'bakī' && (
                         <div className="bg-white rounded-lg overflow-hidden animate-in slide-in-from-bottom-2 duration-300 shadow-sm">
-                            <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/30"><h4 className="font-black text-sm uppercase text-gray-800">Current Market Balances</h4></div>
+                            <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+                                <h4 className="font-black text-sm uppercase text-gray-800">Market Due List (Grouped by Customer)</h4>
+                            </div>
                             <table className="w-full text-left text-sm">
                                 <thead className="bg-white text-sm font-bold text-gray-400 uppercase border-b border-gray-50">
-                                    <tr><th className="px-6 py-4">Customer</th><th className="px-6 py-4 text-right">Owed</th><th className="px-6 py-4 text-right">Remaining Bakī</th><th className="px-6 py-4 text-center">Actions</th></tr>
+                                    <tr>
+                                        <th className="px-6 py-4">Customer</th>
+                                        <th className="px-6 py-4 text-right">Total Owed</th>
+                                        <th className="px-6 py-4 text-right">Remaining Bakī</th>
+                                        <th className="px-6 py-4 text-center">Actions</th>
+                                    </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50 font-medium">
-                                    {transactions.filter(t => t.dueAmount > 0).map(t => (
-                                        <tr key={t._id} className="hover:bg-blue-50/10">
+                                    {groupedBaki.map((c, idx) => (
+                                        <tr key={idx} className="hover:bg-blue-50/10 transition-colors">
                                             <td className="px-6 py-4">
-                                                <p className="font-bold text-gray-800 text-base">{t.customerName || 'Standard Client'}</p>
-                                                <p className="text-sm text-gray-400 font-bold">{t.customerMobile}</p>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-lg bg-blue-50 text-[#1e6bd6] flex items-center justify-center font-black border border-blue-100 shrink-0">
+                                                        {c.name[0].toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-extrabold text-gray-800 text-base">{c.name}</p>
+                                                        <p className="text-xs text-gray-400 font-bold tracking-wider">{c.mobile}</p>
+                                                    </div>
+                                                </div>
                                             </td>
-                                            <td className="px-6 py-4 text-right font-bold text-gray-500">৳{t.totalBill}</td>
-                                            <td className="px-6 py-4 text-right text-[#1e6bd6] font-black underline decoration-blue-100 text-base">৳{t.dueAmount}</td>
+                                            <td className="px-6 py-4 text-right font-bold text-gray-400">৳{c.totalBill.toLocaleString()}</td>
+                                            <td className="px-6 py-4 text-right">
+                                                <span className="text-[#1e6bd6] font-black text-base underline decoration-blue-100 decoration-2">৳{c.dueAmount.toLocaleString()}</span>
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{c.count} transactions</p>
+                                            </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex justify-center gap-2">
-                                                    <button onClick={() => handleViewItems(t.items)} className="bg-blue-50 text-[#1e6bd6] px-4 py-2 rounded-lg hover:bg-blue-100 transition-all shadow-sm flex items-center gap-2 text-sm font-black uppercase" title="View Details">
-                                                        <FiList size={16} /> Info
+                                                    <button onClick={() => handleViewItems(c.allTransactions.flatMap(t => t.items))} className="bg-blue-50 text-[#1e6bd6] px-4 py-2 rounded-lg hover:bg-blue-100 transition-all shadow-sm flex items-center gap-2 text-xs font-black uppercase" title="View All History">
+                                                        <FiList size={14} /> History
                                                     </button>
-                                                    <button onClick={() => handleAddDue(t.customerName, t.customerMobile)} className="bg-[#1e6bd6] text-white px-3 py-2 rounded-lg text-sm font-black uppercase flex items-center gap-1.5 hover:opacity-90 shadow-sm">
-                                                        <FiPlus /> Add Due
+                                                    <button onClick={() => handleAddDue(c.name, c.mobile)} className="bg-[#1e6bd6] text-white px-3 py-2 rounded-lg text-xs font-black uppercase flex items-center gap-1.5 hover:opacity-90 shadow-sm active:scale-95 transition-all">
+                                                        <FiPlus /> New Due
                                                     </button>
-                                                    <button onClick={() => handleCutDue(t._id, t.dueAmount)} className="bg-gray-800 text-white px-3 py-2 rounded-lg text-sm font-black uppercase flex items-center gap-1.5 hover:bg-black shadow-sm">
-                                                        <FiMinusCircle /> Cut Due
+                                                    <button onClick={() => handleSmartPay(c.name, c.allTransactions)} className="bg-gray-800 text-white px-3 py-2 rounded-lg text-xs font-black uppercase flex items-center gap-1.5 hover:bg-black shadow-sm active:scale-95 transition-all">
+                                                        <FiMinusCircle /> Pay
                                                     </button>
                                                 </div>
                                             </td>
                                         </tr>
                                     ))}
-                                    {transactions.filter(t => t.dueAmount > 0).length === 0 && (
-                                        <tr><td colSpan="4" className="px-6 py-20 text-center text-gray-300 italic font-bold uppercase tracking-widest text-sm">No active dues at the moment</td></tr>
+                                    {groupedBaki.length === 0 && (
+                                        <tr><td colSpan="4" className="px-6 py-20 text-center text-gray-300 italic font-black uppercase tracking-widest text-xs">No active dues at the moment</td></tr>
                                     )}
                                 </tbody>
                             </table>

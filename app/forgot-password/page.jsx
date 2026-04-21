@@ -3,18 +3,41 @@ import { useState } from 'react';
 import { FiMail, FiArrowLeft, FiArrowRight } from 'react-icons/fi';
 import Link from 'next/link';
 import Swal from 'sweetalert2';
+import useAxios from '@/hooks/useAxios';
 
 export default function ClientForgotPassword() {
+  const api = useAxios();
   const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    Swal.fire({
-      title: 'Email Sent!',
-      text: 'Check your inbox for password reset instructions',
-      icon: 'success',
-      confirmButtonColor: '#1e6bd6'
-    });
+    setLoading(true);
+    try {
+      Swal.fire({
+        title: 'Sending Reset Link...',
+        didOpen: () => Swal.showLoading(),
+        allowOutsideClick: false
+      });
+
+      const res = await api.post('/client-auth/forgot-password', { email });
+      
+      Swal.fire({
+        title: 'Email Sent!',
+        text: res.data?.message || 'Check your inbox for password reset instructions',
+        icon: 'success',
+        confirmButtonColor: '#1e6bd6'
+      });
+    } catch (error) {
+      Swal.fire({
+        title: 'Error',
+        text: error.response?.data?.message || 'Something went wrong',
+        icon: 'error',
+        confirmButtonColor: '#1e6bd6'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

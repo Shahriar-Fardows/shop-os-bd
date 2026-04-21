@@ -1,7 +1,8 @@
 "use client";
 import {
     FiHome, FiHelpCircle, FiUser, FiLogOut, FiLink, FiDollarSign, FiImage,
-    FiCreditCard, FiScissors, FiFileText, FiGrid, FiFile, FiMail, FiGift, FiPackage, FiLock
+    FiCreditCard, FiScissors, FiFileText, FiGrid, FiFile, FiMail, FiGift, FiPackage, FiLock,
+    FiUserCheck, FiBriefcase
 } from 'react-icons/fi';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -13,6 +14,7 @@ import { getActiveTools } from '@/lib/tools';
 // Tool keys must match server/src/app/modules/platform-config/tools.catalog.ts
 const TOOL_LINKS = [
     { key: 'digitalKhata',      href: '/dashboard/accounting',          label: 'Digital Khata',       icon: FiDollarSign },
+    { key: 'jobApplicationInfo', href: '/dashboard/job-application',    label: 'Job Application Info', icon: FiBriefcase },
     { key: 'linksHub',          href: '/dashboard/links',               label: 'Links Hub',           icon: FiLink },
     { key: 'imageHub',          href: '/dashboard/image-hub',           label: 'Image Hub (R2)',      icon: FiImage },
     { key: 'nidPrinter',        href: '/dashboard/nid-printer',         label: 'NID Printer',         icon: FiCreditCard },
@@ -21,6 +23,7 @@ const TOOL_LINKS = [
     { key: 'applicationLetter', href: '/dashboard/application-letter',  label: 'Application Letter',  icon: FiMail },
     { key: 'cashMemo',          href: '/dashboard/cash-memo',           label: 'Cash Memo Maker',     icon: FiFile },
     { key: 'qrCode',            href: '/dashboard/qr-code',             label: 'QR Code Maker',       icon: FiGrid },
+    { key: 'idCard',            href: '/dashboard/id-card',             label: 'ID Card Maker',       icon: FiUserCheck },
 ];
 
 const Sidebar = ({ handleLogout }) => {

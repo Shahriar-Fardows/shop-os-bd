@@ -110,21 +110,7 @@ function SubscribeContent() {
                 method,
             });
 
-            // Discord notification (server-side — webhook URL stays safe in .env)
-            await fetch('/api/notify-payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userName: user?.name || 'N/A',
-                    userEmail: user?.email || 'N/A',
-                    userPhone: user?.mobileNumber || phone,
-                    planName: plan?.name || 'N/A',
-                    amount: plan?.price || 0,
-                    transactionId: txId.trim().toUpperCase(),
-                    submittedAt: new Date().toLocaleString('en-BD'),
-                }),
-            }).catch(() => {}); // non-critical
-
+            // Discord notification now fires server-side inside POST /payments
             setStep('done');
         } catch (err) {
             Swal.fire('Error', err.response?.data?.message || 'সাবমিট করতে সমস্যা হয়েছে', 'error');
