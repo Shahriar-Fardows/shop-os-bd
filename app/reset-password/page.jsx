@@ -1,12 +1,12 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { FiLock, FiCheck, FiArrowRight } from 'react-icons/fi';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Swal from 'sweetalert2';
 import useAxios from '@/hooks/useAxios';
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const api = useAxios();
@@ -137,3 +137,19 @@ export default function ResetPasswordPage() {
         </div>
     );
 }
+
+export default function ResetPasswordPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-[#fafafa] flex items-center justify-center p-6 font-nunito">
+                <div className="max-w-md w-full bg-white rounded-lg border border-gray-100 p-10 shadow-xl shadow-gray-100 text-center">
+                    <div className="w-12 h-12 border-4 border-gray-100 border-t-[#1e6bd6] rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-sm text-gray-500 font-medium tracking-tight">Initializing reset session...</p>
+                </div>
+            </div>
+        }>
+            <ResetPasswordForm />
+        </Suspense>
+    );
+}
+
