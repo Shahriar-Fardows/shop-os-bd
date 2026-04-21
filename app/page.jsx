@@ -5,7 +5,8 @@ import {
     FiArrowRight, FiFileText, FiFile, FiMail, FiGrid,
     FiImage, FiActivity, FiCreditCard, FiScissors,
     FiCheck, FiZap, FiShield, FiUsers, FiPackage,
-    FiRefreshCw, FiPhone, FiExternalLink, FiStar, FiChevronRight
+    FiRefreshCw, FiPhone, FiExternalLink, FiStar, FiChevronRight,
+    FiLink
 } from 'react-icons/fi';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
