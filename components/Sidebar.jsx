@@ -151,7 +151,7 @@ const Sidebar = ({ handleLogout }) => {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-3 py-4">
+            <div className="flex-1 overflow-y-auto no-scrollbar px-3 py-4">
                 <nav className="space-y-1">
                     <div className="px-3 mb-2">
                         <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-none">মূল মেনু</span>

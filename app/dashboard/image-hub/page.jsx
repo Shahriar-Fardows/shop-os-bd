@@ -16,6 +16,7 @@ export default function ImageHubPage() {
     const [hasMore, setHasMore] = useState(false);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [usage, setUsage] = useState({ monthlyCount: 0, planLimit: 0 });
 
     useEffect(() => {
         fetchImages();
@@ -33,6 +34,7 @@ export default function ImageHubPage() {
             }
             
             setHasMore(res.data.meta.hasMore);
+            setUsage(res.data.meta.usage || { monthlyCount: 0, planLimit: 0 });
             setPage(pageNum);
             setLoading(false);
             setIsLoadingMore(false);
@@ -217,8 +219,10 @@ export default function ImageHubPage() {
                     <h3 className="text-2xl font-black text-emerald-600 mt-1">5.0 MB</h3>
                 </div>
                 <div className="bg-[#1e6bd6] p-6 rounded-lg text-white shadow-xl shadow-blue-50">
-                    <p className="text-xs font-bold text-white/70 uppercase tracking-widest">Optimization</p>
-                    <h3 className="text-xl font-black mt-1">WebP 80% Active</h3>
+                    <p className="text-xs font-bold text-white/70 uppercase tracking-widest">Monthly Usage</p>
+                    <h3 className="text-xl font-black mt-1">
+                        {usage.planLimit === -1 ? `${usage.monthlyCount} / Unlimited` : `${usage.monthlyCount} / ${usage.planLimit}`}
+                    </h3>
                 </div>
             </div>
 
