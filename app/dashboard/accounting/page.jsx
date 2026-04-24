@@ -1,192 +1,90 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { 
-    FiPlus, FiTrendingUp, FiTrendingDown, FiDollarSign, 
-    FiUsers, FiTrash2, FiCalendar, FiPhone, FiBox, 
-    FiArrowRight, FiPieChart, FiAlertCircle, FiSearch,
-    FiCheckCircle, FiMinusCircle, FiList, FiLayers, FiActivity,
-    FiSettings, FiShield
+import {
+    FiPlus, FiTrash2, FiMinusCircle, FiList,
+    FiLayers, FiActivity, FiShield, FiMessageSquare
 } from 'react-icons/fi';
+import { useRouter } from 'next/navigation';
 import useAxios from '@/hooks/useAxios';
 import Swal from 'sweetalert2';
 
-export default function UnifiedBlueAccountsHub() {
+export default function DigitalKhataPage() {
     const api = useAxios();
+    const router = useRouter();
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('daily'); 
-    const [searchQuery, setSearchQuery] = useState('');
+    const [activeTab, setActiveTab] = useState('daily');
 
-    useEffect(() => {
-        fetchData();
-    }, []);
+    useEffect(() => { fetchData(); }, []);
 
     const fetchData = async () => {
         try {
-            const transRes = await api.get('/accounting');
-            setTransactions(transRes.data.data);
-            setLoading(false);
-        } catch (error) {
-            setLoading(false);
-        }
+            const res = await api.get('/accounting');
+            setTransactions(res.data.data);
+        } catch {}
+        setLoading(false);
     };
 
-    const handleAddDue = async (preCustomer = '', preMobile = '') => {
-        const { value: formValues } = await Swal.fire({
-            title: '<span class="font-nunito font-black text-xl text-[#1e6bd6]">ADD NEW DUE (SALE)</span>',
-            html: `
-                <div class="flex flex-col gap-4 text-left font-nunito p-2">
-                    <div class="space-y-1.5 mb-2">
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Customer Info</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <input id="swal-customer" class="swal2-input !m-0 !w-full !rounded-lg text-sm" placeholder="Customer Name" value="${preCustomer}">
-                            <input id="swal-mobile" class="swal2-input !m-0 !w-full !rounded-lg text-sm" placeholder="Mobile Number" value="${preMobile}">
-                        </div>
-                    </div>
-                    <div id="items-container" class="space-y-2">
-                        <label class="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Items & Prices</label>
-                        <div class="flex gap-2 item-row">
-                            <input class="item-name swal2-input !m-0 !w-3/4 !rounded-lg text-sm" placeholder="e.g. Printing">
-                            <input type="number" class="item-price swal2-input !m-0 !w-1/4 !rounded-lg text-sm font-bold" placeholder="Price">
-                        </div>
-                    </div>
-                    <button type="button" onclick="document.getElementById('items-container').insertAdjacentHTML('beforeend', '<div class=\\'flex gap-2 mt-2 item-row\\'><input class=\\'item-name swal2-input !m-0 !w-3/4 !rounded-lg text-sm\\' placeholder=\\'Add Item\\' /><input type=\\'number\\' class=\\'item-price swal2-input !m-0 !w-1/4 !rounded-lg text-sm font-bold\\' placeholder=\\'Price\\' /></div>')" class="text-sm font-black text-brand uppercase mt-2 self-start hover:underline">+ Add More Line Item</button>
 
-                    <div class="space-y-1.5 mt-4 border-t pt-4">
-                        <label class="text-sm font-bold text-gray-400 uppercase tracking-widest px-1">Initial Payment (৳)</label>
-                        <input id="swal-paid" type="number" class="swal2-input !m-0 !w-full !rounded-lg text-base bg-gray-50 font-bold" placeholder="Paid now?">
-                    </div>
-                </div>
-            `,
-            confirmButtonText: 'Save Records',
+
+    /* ── SMART PAY ── */
+    const handleSmartPay = async (customerName, txns) => {
+        const totalDue = txns.reduce((s, t) => s + (t.dueAmount || 0), 0);
+        const { value: amount } = await Swal.fire({
+            title: `<span class="font-nunito font-black text-xl text-[#1e6bd6]">পেমেন্ট: ${customerName}</span>`,
+            input: 'number',
+            inputLabel: `মোট বাকি: ৳${totalDue}`,
+            confirmButtonText: 'পেমেন্ট নিন',
             confirmButtonColor: '#1e6bd6',
             showCancelButton: true,
+            cancelButtonText: 'বাতিল',
             allowOutsideClick: false,
             showCloseButton: true,
-            preConfirm: () => {
-                const customerName = document.getElementById('swal-customer').value;
-                const customerMobile = document.getElementById('swal-mobile').value;
-                const paidAmount = document.getElementById('swal-paid').value;
-                const itemRows = document.querySelectorAll('.item-row');
-                const items = [];
-                itemRows.forEach(row => {
-                    const name = row.querySelector('.item-name').value;
-                    const price = row.querySelector('.item-price').value;
-                    if (name && price) items.push({ name, price: Number(price) });
-                });
-                if (items.length === 0) return Swal.showValidationMessage('Please add at least one item');
-                return { title: `Sale to ${customerName || 'Customer'}`, customerName, customerMobile, items, paidAmount: Number(paidAmount || 0), type: 'Service' };
-            }
         });
-
-        if (formValues) {
-            try {
-                await api.post('/accounting/add', formValues);
-                fetchData();
-                Swal.fire({ icon: 'success', title: 'Due Recorded', showConfirmButton: false, timer: 1500 });
-            } catch (error) {
-                Swal.fire('Error', 'Record failed', 'error');
+        if (!amount) return;
+        let remaining = Number(amount);
+        const sorted = [...txns].sort((a, b) => new Date(a.date) - new Date(b.date));
+        try {
+            Swal.fire({ title: 'পেমেন্ট প্রক্রিয়া হচ্ছে…', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+            for (const t of sorted) {
+                if (remaining <= 0) break;
+                const pay = Math.min(remaining, t.dueAmount);
+                await api.patch(`/accounting/update-payment/${t._id}`, { addAmount: pay });
+                remaining -= pay;
             }
+            fetchData();
+            Swal.fire('সফল', `৳${amount} ${customerName}-এর হিসাবে যোগ হয়েছে।`, 'success');
+        } catch {
+            Swal.fire('ত্রুটি', 'পেমেন্ট আংশিক প্রযুক্ত হয়েছে। রেকর্ড যাচাই করুন।', 'error');
         }
     };
 
-    const handleCutDue = async (id, currentDue) => {
-        const { value: amount } = await Swal.fire({
-            title: '<span class="font-nunito font-black text-xl text-[#1e6bd6]">CUT DUE (PAYMENT)</span>',
-            input: 'number',
-            inputLabel: `Remaining Owed: ৳${currentDue}`,
-            confirmButtonText: 'Reduce Due',
-            confirmButtonColor: '#1e6bd6',
-            showCancelButton: true,
-            allowOutsideClick: false,
-            showCloseButton: true
-        });
-        if (amount) {
-            try {
-                await api.patch(`/accounting/update-payment/${id}`, { addAmount: amount });
-                fetchData();
-                Swal.fire('Updated', 'Balance adjusted.', 'success');
-            } catch (error) {
-                Swal.fire('Error', 'Update failed', 'error');
-            }
-        }
-    };
-
-    const handleSmartPay = async (customerName, transactions) => {
-        const totalDue = transactions.reduce((s, t) => s + (t.dueAmount || 0), 0);
-        const { value: amount } = await Swal.fire({
-            title: `<span class="font-nunito font-black text-xl text-[#1e6bd6]">PAYMENT: ${customerName}</span>`,
-            input: 'number',
-            inputLabel: `Total Outstanding: ৳${totalDue}`,
-            confirmButtonText: 'Apply Payment',
-            confirmButtonColor: '#1e6bd6',
-            showCancelButton: true,
-            allowOutsideClick: false,
-            showCloseButton: true
-        });
-
-        if (amount) {
-            let remaining = Number(amount);
-            const sorted = [...transactions].sort((a, b) => new Date(a.date) - new Date(b.date)); // Oldest first
-            
-            try {
-                Swal.fire({ title: 'Applying Payment...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
-                for (const t of sorted) {
-                    if (remaining <= 0) break;
-                    const pay = Math.min(remaining, t.dueAmount);
-                    await api.patch(`/accounting/update-payment/${t._id}`, { addAmount: pay });
-                    remaining -= pay;
-                }
-                fetchData();
-                Swal.fire('Success', `৳${amount} applied to ${customerName}'s account.`, 'success');
-            } catch (error) {
-                Swal.fire('Error', 'Bulk payment failed halfway. Please check records.', 'error');
-            }
-        }
-    };
-
+    /* ── QUICK ADD ── */
     const handleQuickAdd = async (type) => {
+        const label = type === 'Income' ? 'আয়' : 'খরচ';
         const { value: val } = await Swal.fire({
-            title: `Record ${type}`,
-            html: `<input id="q-t" class="swal2-input" placeholder="Title"><input id="q-a" type="number" class="swal2-input" placeholder="Amount">`,
+            title: `${label} রেকর্ড করুন`,
+            html: `<input id="q-t" class="swal2-input" placeholder="বিবরণ"><input id="q-a" type="number" class="swal2-input" placeholder="পরিমাণ (৳)">`,
+            confirmButtonText: 'সংরক্ষণ',
             confirmButtonColor: '#1e6bd6',
+            showCancelButton: true,
+            cancelButtonText: 'বাতিল',
             allowOutsideClick: false,
             showCloseButton: true,
-            preConfirm: () => ({ title: document.getElementById('q-t').value, amount: Number(document.getElementById('q-a').value), type })
+            preConfirm: () => ({ title: document.getElementById('q-t').value, amount: Number(document.getElementById('q-a').value), type }),
         });
         if (val) { await api.post('/accounting/add', val); fetchData(); }
     };
 
-    const handleYearlyCleanup = async () => {
-        const confirm = await Swal.fire({
-            title: 'YEARLY DATA CLEANUP',
-            text: "Delete history before current year? (Dues are kept safe)",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#1e6bd6',
-            confirmButtonText: 'Yes, Cleanup',
-            allowOutsideClick: false,
-            showCloseButton: true
-        });
-        if (confirm.isConfirmed) {
-            try {
-                await api.post('/accounting/yearly-cleanup');
-                fetchData();
-                Swal.fire('Cleaned', 'History removed.', 'success');
-            } catch (error) {
-                Swal.fire('Error', 'Cleanup failed', 'error');
-            }
-        }
-    };
-
+    /* ── VIEW ITEMS ── */
     const handleViewItems = (items = []) => {
         Swal.fire({
-            title: '<span class="font-nunito font-black text-xl text-[#1e6bd6]">PURCHASE DETAILS</span>',
+            title: '<span class="font-nunito font-black text-xl text-[#1e6bd6]">বিক্রয় বিবরণ</span>',
             html: `
                 <div class="text-left font-nunito p-2">
                     <table class="w-full text-sm">
                         <thead class="text-sm text-gray-400 uppercase border-b">
-                            <tr><th class="py-2 text-left">Item Name</th><th class="py-2 text-right">Price</th></tr>
+                            <tr><th class="py-2 text-left">পণ্য</th><th class="py-2 text-right">মূল্য</th></tr>
                         </thead>
                         <tbody class="divide-y">
                             ${items.map(i => `<tr><td class="py-3 font-bold text-gray-700">${i.name}</td><td class="py-3 text-right font-black text-[#1e6bd6]">৳${i.price}</td></tr>`).join('')}
@@ -194,133 +92,254 @@ export default function UnifiedBlueAccountsHub() {
                     </table>
                 </div>
             `,
-            confirmButtonText: 'Great, Close',
+            confirmButtonText: 'বন্ধ করুন',
             confirmButtonColor: '#1e6bd6',
             allowOutsideClick: false,
-            showCloseButton: true
+            showCloseButton: true,
         });
     };
 
+    /* ── DELETE ── */
     const handleDelete = (id) => {
-        Swal.fire({ 
-            title: 'Delete Transaction?', 
-            text: 'This action cannot be undone.',
-            icon: 'warning', 
-            showCancelButton: true, 
+        Swal.fire({
+            title: 'লেনদেন মুছবেন?',
+            text: 'এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।',
+            icon: 'warning',
+            showCancelButton: true,
             confirmButtonColor: '#1e6bd6',
+            confirmButtonText: 'হ্যাঁ, মুছুন',
+            cancelButtonText: 'বাতিল',
             allowOutsideClick: false,
-            showCloseButton: true
-        }).then(r => {
-            if (r.isConfirmed) api.delete(`/accounting/${id}`).then(fetchData);
-        });
+            showCloseButton: true,
+        }).then(r => { if (r.isConfirmed) api.delete(`/accounting/${id}`).then(fetchData); });
     };
 
-    const groupedBaki = Object.values(transactions.filter(t => t.dueAmount > 0).reduce((acc, t) => {
-        const key = t.customerMobile || t.customerName || 'Standard Client';
-        if (!acc[key]) {
-            acc[key] = {
-                name: t.customerName || 'Standard Client',
-                mobile: t.customerMobile || 'N/A',
-                totalBill: 0,
-                dueAmount: 0,
-                count: 0,
-                lastId: t._id,
-                allTransactions: []
-            };
+    /* ── SEND SMS TO BAKI CUSTOMER ── */
+    const handleSendSms = async (customer) => {
+        const phone = customer.mobile?.trim();
+        if (!phone) {
+            Swal.fire('ত্রুটি', 'এই গ্রাহকের মোবাইল নম্বর নেই', 'error');
+            return;
         }
-        acc[key].totalBill += (t.totalBill || 0);
-        acc[key].dueAmount += (t.dueAmount || 0);
-        acc[key].count += 1;
-        acc[key].lastId = t._id; // Most recent for quick cut
-        acc[key].allTransactions.push(t);
-        return acc;
-    }, {}));
 
-    const inc = transactions.filter(t => t.type !== 'Expense').reduce((s, t) => s + (t.amount || 0), 0);
-    const exp = transactions.filter(t => t.type === 'Expense').reduce((s, t) => s + (t.amount || 0), 0);
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const longLink = `https://shoposbd.com/i/${user.shortId || user._id}/${encodeURIComponent(customer.name)}`;
+        
+        // Generate short link via API
+        let shortCode = '';
+        try {
+            const shortRes = await api.post('/s/shorten', { url: longLink });
+            shortCode = shortRes.data.data;
+        } catch (e) {
+            console.error('Shortening failed', e);
+        }
+
+        const link = shortCode ? `shoposbd.com/s/${shortCode}` : `shoposbd.com/i/${user.shortId || user._id}/${encodeURIComponent(customer.name)}`;
+        const template = `( ShopOSBd ) আপনার ${customer.dueAmount?.toLocaleString()}৳ বাকি আছে। লিঙ্ক: ${link}`;
+
+        const { isConfirmed } = await Swal.fire({
+            title: `<span class="font-nunito font-black text-lg text-[#1e6bd6]">SMS পাঠান: ${customer.name}</span>`,
+            html: `
+                <div class="text-left font-nunito p-2 space-y-3">
+                    <p class="text-sm text-gray-500">প্রাপক: <strong>${phone}</strong></p>
+                    <p class="text-sm text-gray-500">বাকি: <strong class="text-[#1e6bd6]">৳${customer.dueAmount?.toLocaleString()}</strong></p>
+                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <p class="text-xs font-bold text-gray-500 mb-1 uppercase tracking-widest">SMS টেমপ্লেট প্রিভিউ:</p>
+                        <p class="text-sm text-gray-800 font-medium">${template}</p>
+                    </div>
+                </div>
+            `,
+            confirmButtonText: 'পাঠান',
+            confirmButtonColor: '#1e6bd6',
+            showCancelButton: true,
+            cancelButtonText: 'বাতিল',
+        });
+
+        if (!isConfirmed) return;
+
+        try {
+            await api.post('/sms/send', { recipients: [phone], message: template });
+            Swal.fire({ icon: 'success', title: 'SMS পাঠানো হয়েছে!', showConfirmButton: false, timer: 1500 });
+        } catch (e) {
+            Swal.fire('ত্রুটি', e?.response?.data?.message || 'SMS পাঠাতে ব্যর্থ', 'error');
+        }
+    };
+
+    /* ── YEARLY CLEANUP ── */
+    const handleYearlyCleanup = async () => {
+        const result = await Swal.fire({
+            title: 'বার্ষিক ডেটা পরিষ্কার',
+            text: 'চলতি বছরের আগের পেইড রেকর্ড মুছবেন? (বাকি রেকর্ড সুরক্ষিত থাকবে)',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#1e6bd6',
+            confirmButtonText: 'হ্যাঁ, পরিষ্কার করুন',
+            cancelButtonText: 'বাতিল',
+            allowOutsideClick: false,
+            showCloseButton: true,
+        });
+        if (result.isConfirmed) {
+            try {
+                await api.post('/accounting/yearly-cleanup');
+                fetchData();
+                Swal.fire('সম্পন্ন', 'পুরনো রেকর্ড মুছে ফেলা হয়েছে।', 'success');
+            } catch {
+                Swal.fire('ত্রুটি', 'পরিষ্কার করা সম্ভব হয়নি।', 'error');
+            }
+        }
+    };
+
+    /* ── STATS ── */
+    const inc  = transactions.filter(t => t.type !== 'Expense').reduce((s, t) => s + (t.amount || 0), 0);
+    const exp  = transactions.filter(t => t.type === 'Expense').reduce((s, t) => s + (t.amount || 0), 0);
     const baki = transactions.reduce((s, t) => s + (t.dueAmount || 0), 0);
+
+    const groupedBaki = Object.values(
+        transactions.filter(t => t.dueAmount > 0).reduce((acc, t) => {
+            const key = t.customerMobile || t.customerName || 'সাধারণ গ্রাহক';
+            if (!acc[key]) acc[key] = { name: t.customerName || 'সাধারণ গ্রাহক', mobile: t.customerMobile || 'N/A', totalBill: 0, dueAmount: 0, count: 0, allTransactions: [] };
+            acc[key].totalBill += (t.totalBill || 0);
+            acc[key].dueAmount += (t.dueAmount || 0);
+            acc[key].count += 1;
+            acc[key].allTransactions.push(t);
+            return acc;
+        }, {})
+    );
 
     const monthly = {};
     transactions.forEach(t => {
-        const k = `${new Date(t.date).toLocaleString('en-US', { month: 'long' })} ${new Date(t.date).getFullYear()}`;
+        const months = ['জানুয়ারি','ফেব্রুয়ারি','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্টেম্বর','অক্টোবর','নভেম্বর','ডিসেম্বর'];
+        const d = new Date(t.date);
+        const k = `${months[d.getMonth()]} ${d.getFullYear()}`;
         if (!monthly[k]) monthly[k] = { inc: 0, exp: 0, bak: 0 };
-        if (t.type !== 'Expense') monthly[k].inc += (t.amount || 0); else monthly[k].exp += (t.amount || 0);
+        if (t.type !== 'Expense') monthly[k].inc += (t.amount || 0);
+        else monthly[k].exp += (t.amount || 0);
         monthly[k].bak += (t.dueAmount || 0);
     });
 
+    const TABS = [
+        { key: 'daily',   label: 'দৈনিক খাতা' },
+        { key: 'summary', label: 'মাসিক সারাংশ' },
+        { key: 'baki',    label: 'গ্রাহক বাকি' },
+        { key: 'settings',label: 'সেটিংস' },
+    ];
+
     return (
-        <div className="space-y-8 font-nunito pb-20">
-            {/* Action Bar - ALL BLUE */}
+        <div className="space-y-8 font-nunito pb-20 container mx-auto">
+
+            {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                 <div>
-                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">Shop Accounts</h2>
-                    <p className="text-sm text-gray-400 font-bold uppercase tracking-widest mt-1">Unified Daily Ledger</p>
+                    <h2 className="text-3xl font-black text-gray-900 tracking-tight">ডিজিটাল খাতা</h2>
+                    <p className="text-sm text-gray-400 font-bold uppercase tracking-widest mt-1">দৈনিক হিসাব · আয়-ব্যয় · বাকি ব্যবস্থাপনা</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <button onClick={() => handleQuickAdd('Income')} className="bg-[#1e6bd6] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:opacity-90 transition-all flex items-center gap-2 active:scale-95">
-                        <FiPlus /> Income
+                        <FiPlus /> আয়
                     </button>
                     <button onClick={() => handleQuickAdd('Expense')} className="bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-black transition-all flex items-center gap-2 active:scale-95">
-                        <FiPlus /> Expense
+                        <FiPlus /> খরচ
                     </button>
-                    <button onClick={() => handleAddDue()} className="bg-[#1e6bd6] text-white px-6 py-2.5 rounded-lg text-sm font-black shadow-lg shadow-blue-50 hover:opacity-90 transition-all flex items-center gap-2 active:scale-95">
-                        <FiLayers /> ADD NEW DUE (SALE)
-                    </button>
+                <button 
+                    onClick={() => router.push('/dashboard/accounting/add')}
+                    className="bg-[#1e6bd6] text-white px-6 py-2.5 rounded-lg text-sm font-black shadow-lg shadow-blue-50 hover:opacity-90 transition-all flex items-center gap-2 active:scale-95"
+                >
+                    <FiPlus /> নতুন বাকি / বিক্রয়
+                </button>
                 </div>
             </div>
 
+            {/* Tabs */}
             <div className="flex bg-white p-1 rounded-lg w-fit gap-1 shadow-sm">
-                {['daily', 'summary', 'bakī', 'settings'].map(t => (
-                    <button key={t} onClick={() => setActiveTab(t)} className={`px-5 py-2 rounded-lg text-sm font-black uppercase tracking-widest transition-all ${activeTab === t ? 'bg-[#1e6bd6] text-white' : 'text-gray-400 hover:bg-gray-50'}`}>
-                        {t === 'daily' ? 'Daily Ledger' : t === 'bakī' ? 'Customer Bakī' : t}
+                {TABS.map(t => (
+                    <button key={t.key} onClick={() => setActiveTab(t.key)}
+                        className={`px-5 py-2 rounded-lg text-sm font-black uppercase tracking-widest transition-all ${activeTab === t.key ? 'bg-[#1e6bd6] text-white' : 'text-gray-400 hover:bg-gray-50'}`}>
+                        {t.label}
                     </button>
                 ))}
             </div>
 
-            {loading ? <div className="animate-pulse space-y-4">{[1,2,3].map(i => <div key={i} className="h-20 bg-gray-50 rounded-lg" />)}</div> : (
+            {loading ? (
+                <div className="animate-pulse space-y-4">{[1, 2, 3].map(i => <div key={i} className="h-20 bg-gray-50 rounded-lg" />)}</div>
+            ) : (
                 <>
-                    {/* Daily Ledger Tab */}
+                    {/* Daily Ledger */}
                     {activeTab === 'daily' && (
                         <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-300">
-                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <div className="bg-white p-5 rounded-lg shadow-sm border-l-4 border-l-[#1e6bd6]"><p className="text-sm font-bold text-gray-400 uppercase">Total Income</p><h3 className="text-xl font-black text-[#1e6bd6]">৳{inc.toLocaleString()}</h3></div>
-                                <div className="bg-white p-5 rounded-lg shadow-sm border-l-4 border-l-gray-400"><p className="text-sm font-bold text-gray-400 uppercase">Total Expense</p><h3 className="text-xl font-black text-gray-700">৳{exp.toLocaleString()}</h3></div>
-                                <div className="bg-white p-5 rounded-lg shadow-sm border-l-4 border-l-emerald-500"><p className="text-sm font-bold text-gray-400 uppercase">Shop Profit</p><h3 className="text-xl font-black text-emerald-600">৳{(inc-exp).toLocaleString()}</h3></div>
-                                <div className="bg-[#1e6bd6] p-5 rounded-lg text-white shadow-xl shadow-blue-50"><p className="text-sm font-bold text-white/70 uppercase">Outstanding Bakī</p><h3 className="text-2xl font-black">৳{baki.toLocaleString()}</h3></div>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div className="bg-white p-5 rounded-lg shadow-sm border-l-4 border-l-[#1e6bd6]">
+                                    <p className="text-sm font-bold text-gray-400 uppercase">মোট আয়</p>
+                                    <h3 className="text-xl font-black text-[#1e6bd6]">৳{inc.toLocaleString()}</h3>
+                                </div>
+                                <div className="bg-white p-5 rounded-lg shadow-sm border-l-4 border-l-gray-400">
+                                    <p className="text-sm font-bold text-gray-400 uppercase">মোট খরচ</p>
+                                    <h3 className="text-xl font-black text-gray-700">৳{exp.toLocaleString()}</h3>
+                                </div>
+                                <div className="bg-white p-5 rounded-lg shadow-sm border-l-4 border-l-emerald-500">
+                                    <p className="text-sm font-bold text-gray-400 uppercase">মুনাফা</p>
+                                    <h3 className="text-xl font-black text-emerald-600">৳{(inc - exp).toLocaleString()}</h3>
+                                </div>
+                                <div className="bg-[#1e6bd6] p-5 rounded-lg text-white shadow-xl shadow-blue-50">
+                                    <p className="text-sm font-bold text-white/70 uppercase">মোট বাকি</p>
+                                    <h3 className="text-2xl font-black">৳{baki.toLocaleString()}</h3>
+                                </div>
                             </div>
                             <div className="bg-white rounded-lg overflow-hidden shadow-sm">
                                 <table className="w-full text-left text-sm text-gray-700">
                                     <thead className="bg-gray-50/50 text-sm uppercase font-bold text-gray-400">
-                                        <tr><th className="px-6 py-4">Transaction Details</th><th className="px-6 py-4 text-center">Type</th><th className="px-6 py-4 text-right">Amount (৳)</th><th className="px-6 py-4 text-center">Action</th></tr>
+                                        <tr>
+                                            <th className="px-6 py-4">লেনদেনের বিবরণ</th>
+                                            <th className="px-6 py-4 text-center">ধরন</th>
+                                            <th className="px-6 py-4 text-right">পরিমাণ (৳)</th>
+                                            <th className="px-6 py-4 text-center">কার্যক্রম</th>
+                                        </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-50 font-medium">
                                         {transactions.map(t => (
                                             <tr key={t._id} className="hover:bg-gray-50/50">
-                                                <td className="px-6 py-4"><p className="font-bold text-gray-800 text-base">{t.title}</p><p className="text-sm text-gray-400 font-bold uppercase">{t.items?.length ? t.items.map(i => `${i.name}(৳${i.price})`).join(', ') : ''}</p></td>
-                                                <td className="px-6 py-4 text-center"><span className={`px-3 py-1 rounded-full text-sm font-bold uppercase border ${t.type === 'Expense' ? 'bg-gray-50 text-gray-600 border-gray-200' : 'bg-blue-50 text-[#1e6bd6] border-blue-100'}`}>{t.type}</span></td>
-                                                <td className={`px-6 py-4 text-right font-black text-base ${t.type === 'Expense' ? 'text-gray-700' : 'text-[#1e6bd6]'}`}>৳{t.amount?.toLocaleString()}</td>
-                                                <td className="px-6 py-4 flex justify-center"><button onClick={() => handleDelete(t._id)} className="text-gray-300 hover:text-red-500 transition-all text-lg"><FiTrash2 /></button></td>
+                                                <td className="px-6 py-4">
+                                                    <p className="font-bold text-gray-800 text-base">{t.title}</p>
+                                                    {t.items?.length > 0 && (
+                                                        <p className="text-sm text-gray-400 font-bold uppercase">{t.items.map(i => `${i.name}(৳${i.price})`).join(', ')}</p>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4 text-center">
+                                                    <span className={`px-3 py-1 rounded-full text-sm font-bold uppercase border ${t.type === 'Expense' ? 'bg-gray-50 text-gray-600 border-gray-200' : 'bg-blue-50 text-[#1e6bd6] border-blue-100'}`}>
+                                                        {t.type === 'Income' ? 'আয়' : t.type === 'Expense' ? 'খরচ' : 'সেবা'}
+                                                    </span>
+                                                </td>
+                                                <td className={`px-6 py-4 text-right font-black text-base ${t.type === 'Expense' ? 'text-gray-700' : 'text-[#1e6bd6]'}`}>
+                                                    ৳{t.amount?.toLocaleString()}
+                                                </td>
+                                                <td className="px-6 py-4 flex justify-center">
+                                                    <button onClick={() => handleDelete(t._id)} className="text-gray-300 hover:text-red-500 transition-all text-lg">
+                                                        <FiTrash2 />
+                                                    </button>
+                                                </td>
                                             </tr>
                                         ))}
+                                        {transactions.length === 0 && (
+                                            <tr><td colSpan="4" className="px-6 py-16 text-center text-gray-300 font-black italic uppercase tracking-widest text-xs">এখনো কোনো লেনদেন নেই</td></tr>
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                     )}
 
-                    {/* Customer Bakī Tab (GROUPED) */}
-                    {activeTab === 'bakī' && (
+                    {/* Customer Baki */}
+                    {activeTab === 'baki' && (
                         <div className="bg-white rounded-lg overflow-hidden animate-in slide-in-from-bottom-2 duration-300 shadow-sm">
-                            <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
-                                <h4 className="font-black text-sm uppercase text-gray-800">Market Due List (Grouped by Customer)</h4>
+                            <div className="p-4 border-b border-gray-50 bg-gray-50/30">
+                                <h4 className="font-black text-sm uppercase text-gray-800">গ্রাহকভিত্তিক বাকির তালিকা</h4>
                             </div>
                             <table className="w-full text-left text-sm">
                                 <thead className="bg-white text-sm font-bold text-gray-400 uppercase border-b border-gray-50">
                                     <tr>
-                                        <th className="px-6 py-4">Customer</th>
-                                        <th className="px-6 py-4 text-right">Total Owed</th>
-                                        <th className="px-6 py-4 text-right">Remaining Bakī</th>
-                                        <th className="px-6 py-4 text-center">Actions</th>
+                                        <th className="px-6 py-4">গ্রাহক</th>
+                                        <th className="px-6 py-4 text-right">মোট বিল</th>
+                                        <th className="px-6 py-4 text-right">বাকি আছে</th>
+                                        <th className="px-6 py-4 text-center">কার্যক্রম</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50 font-medium">
@@ -337,40 +356,55 @@ export default function UnifiedBlueAccountsHub() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-right font-bold text-gray-400">৳{c.totalBill.toLocaleString()}</td>
+                                            <td className="px-6 py-4 text-right font-bold text-gray-400 text-base">৳{c.totalBill.toLocaleString()}</td>
                                             <td className="px-6 py-4 text-right">
-                                                <span className="text-[#1e6bd6] font-black text-base underline decoration-blue-100 decoration-2">৳{c.dueAmount.toLocaleString()}</span>
-                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{c.count} transactions</p>
+                                                <span className="text-[#1e6bd6] font-black text-lg underline decoration-blue-100 decoration-2">৳{c.dueAmount.toLocaleString()}</span>
+                                                <p className="text-xs text-gray-400 font-bold uppercase tracking-tighter">{c.count} লেনদেন</p>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex justify-center gap-2">
-                                                    <button onClick={() => handleViewItems(c.allTransactions.flatMap(t => t.items))} className="bg-blue-50 text-[#1e6bd6] px-4 py-2 rounded-lg hover:bg-blue-100 transition-all shadow-sm flex items-center gap-2 text-xs font-black uppercase" title="View All History">
-                                                        <FiList size={14} /> History
+                                                    <button onClick={() => handleViewItems(c.allTransactions.flatMap(t => t.items))}
+                                                        className="bg-blue-50 text-[#1e6bd6] border border-blue-100 px-4 py-2.5 rounded-lg hover:bg-blue-100 transition-all shadow-sm flex items-center gap-2 text-sm font-black uppercase">
+                                                        <FiList size={16} /> ইতিহাস
                                                     </button>
-                                                    <button onClick={() => handleAddDue(c.name, c.mobile)} className="bg-[#1e6bd6] text-white px-3 py-2 rounded-lg text-xs font-black uppercase flex items-center gap-1.5 hover:opacity-90 shadow-sm active:scale-95 transition-all">
-                                                        <FiPlus /> New Due
+                                                    <button onClick={() => router.push(`/dashboard/accounting/add?name=${c.name}&mobile=${c.mobile}`)}
+                                                        className="bg-[#1e6bd6] text-white border border-blue-600 px-4 py-2.5 rounded-lg text-sm font-black uppercase flex items-center gap-1.5 hover:opacity-90 shadow-sm active:scale-95 transition-all">
+                                                        <FiPlus size={16} /> বাকি
                                                     </button>
-                                                    <button onClick={() => handleSmartPay(c.name, c.allTransactions)} className="bg-gray-800 text-white px-3 py-2 rounded-lg text-xs font-black uppercase flex items-center gap-1.5 hover:bg-black shadow-sm active:scale-95 transition-all">
-                                                        <FiMinusCircle /> Pay
+                                                    <button onClick={() => handleSmartPay(c.name, c.allTransactions)}
+                                                        className="bg-gray-800 text-white border border-black px-4 py-2.5 rounded-lg text-sm font-black uppercase flex items-center gap-1.5 hover:bg-black shadow-sm active:scale-95 transition-all">
+                                                        <FiMinusCircle size={16} /> পেমেন্ট
                                                     </button>
+                                                    {c.mobile && (
+                                                        <button onClick={() => handleSendSms(c)}
+                                                            className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-2.5 rounded-lg text-sm font-black uppercase flex items-center gap-1.5 hover:bg-emerald-100 shadow-sm active:scale-95 transition-all"
+                                                            title="SMS পাঠান">
+                                                            <FiMessageSquare size={16} /> SMS
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
                                     ))}
                                     {groupedBaki.length === 0 && (
-                                        <tr><td colSpan="4" className="px-6 py-20 text-center text-gray-300 italic font-black uppercase tracking-widest text-xs">No active dues at the moment</td></tr>
+                                        <tr><td colSpan="4" className="px-6 py-20 text-center text-gray-300 italic font-black uppercase tracking-widest text-xs">এই মুহূর্তে কোনো বাকি নেই</td></tr>
                                     )}
                                 </tbody>
                             </table>
                         </div>
                     )}
 
-                    {/* Summary Tab */}
+                    {/* Monthly Summary */}
                     {activeTab === 'summary' && (
                         <div className="bg-white rounded-lg overflow-hidden animate-in slide-in-from-bottom-2 duration-300 shadow-sm">
                             <table className="w-full text-left text-sm">
                                 <thead className="bg-gray-50 text-xs font-bold uppercase text-gray-400 border-b border-gray-50">
-                                    <tr><th className="px-6 py-4">Month</th><th className="px-6 py-4 text-right text-[#1e6bd6]">Income</th><th className="px-6 py-4 text-right">Expense</th><th className="px-6 py-4 text-right">Bakī</th></tr>
+                                    <tr>
+                                        <th className="px-6 py-4">মাস</th>
+                                        <th className="px-6 py-4 text-right text-[#1e6bd6]">আয়</th>
+                                        <th className="px-6 py-4 text-right">খরচ</th>
+                                        <th className="px-6 py-4 text-right">বাকি</th>
+                                    </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50 font-bold text-gray-700">
                                     {Object.keys(monthly).map(m => (
@@ -381,21 +415,80 @@ export default function UnifiedBlueAccountsHub() {
                                             <td className="px-6 py-4 text-right text-base">৳{monthly[m].bak.toLocaleString()}</td>
                                         </tr>
                                     ))}
+                                    {Object.keys(monthly).length === 0 && (
+                                        <tr><td colSpan="4" className="px-6 py-16 text-center text-gray-300 font-black italic uppercase tracking-widest text-xs">কোনো ডেটা নেই</td></tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
                     )}
 
-                    {/* Settings Tab */}
+                    {/* Settings */}
                     {activeTab === 'settings' && (
-                        <div className="animate-in slide-in-from-bottom-2 duration-300">
+                        <div className="animate-in slide-in-from-bottom-2 duration-300 space-y-6">
+                            {/* Shop Settings */}
                             <div className="bg-white p-8 rounded-lg shadow-sm border-t-4 border-t-[#1e6bd6]">
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className="w-12 h-12 bg-blue-50 text-[#1e6bd6] rounded-lg flex items-center justify-center border border-blue-100"><FiShield size={24} /></div>
-                                    <div><h4 className="text-xl font-black text-gray-800">Automatic Yearly Cleanup</h4><p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Maintenance Tool</p></div>
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="w-12 h-12 bg-blue-50 text-[#1e6bd6] rounded-lg flex items-center justify-center border border-blue-100">
+                                        <FiActivity size={24} />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-xl font-black text-gray-800">দোকান / ব্র্যান্ড সেটিংস</h4>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">মেসেজ টেমপ্লেট ও ব্র্যান্ডিং</p>
+                                    </div>
                                 </div>
-                                <p className="text-base text-gray-500 font-medium mb-8">Delete history before current year to maintain performance। <br/><span className="text-[#1e6bd6] font-black underline decoration-blue-100 italic">Dues will NOT be deleted.</span></p>
-                                <button onClick={handleYearlyCleanup} className="bg-[#1e6bd6] text-white px-8 py-3 rounded-lg font-black text-sm uppercase tracking-widest hover:opacity-95 transition-all shadow-lg shadow-blue-50 active:scale-95">Run System Cleanup</button>
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black text-gray-500 uppercase tracking-widest px-1">দোকানের নাম (SMS-এর জন্য)</label>
+                                        <div className="flex gap-2">
+                                            <input 
+                                                id="shop-name-input"
+                                                type="text"
+                                                defaultValue={JSON.parse(localStorage.getItem('user') || '{}').shopName || ''}
+                                                className="flex-1 px-5 py-3 rounded-xl border border-blue-100 bg-gray-50/30 text-base font-bold focus:border-[#1e6bd6] outline-none transition-all"
+                                                placeholder="যেমন: রহিম স্টোর"
+                                            />
+                                            <button 
+                                                onClick={async () => {
+                                                    const name = document.getElementById('shop-name-input').value;
+                                                    try {
+                                                        const res = await api.patch('/client/update-me', { shopName: name });
+                                                        const user = JSON.parse(localStorage.getItem('user') || '{}');
+                                                        user.shopName = name;
+                                                        localStorage.setItem('user', JSON.stringify(user));
+                                                        Swal.fire({ icon: 'success', title: 'সংরক্ষিত হয়েছে', showConfirmButton: false, timer: 1500 });
+                                                    } catch (e) {
+                                                        Swal.fire('ত্রুটি', 'সেভ করা সম্ভব হয়নি', 'error');
+                                                    }
+                                                }}
+                                                className="bg-[#1e6bd6] text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[#1656ac] transition-all active:scale-95 shadow-lg shadow-blue-50"
+                                            >
+                                                সেভ করুন
+                                            </button>
+                                        </div>
+                                        <p className="text-[10px] text-gray-400 font-bold px-1 italic">* এটি আপনার পাঠানো SMS-এর শুরুতে থাকবে। ফাঁকা রাখলে "ShopOSBd" যাবে।</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-8 rounded-lg shadow-sm border-t-4 border-t-gray-200">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="w-12 h-12 bg-gray-50 text-gray-400 rounded-lg flex items-center justify-center border border-gray-100">
+                                        <FiShield size={24} />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-xl font-black text-gray-800">বার্ষিক ডেটা পরিষ্কার</h4>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">রক্ষণাবেক্ষণ টুল</p>
+                                    </div>
+                                </div>
+                                <p className="text-base text-gray-500 font-medium mb-8">
+                                    পারফরমেন্স ঠিক রাখতে চলতি বছরের আগের পেইড রেকর্ড মুছুন।<br />
+                                    <span className="text-[#1e6bd6] font-black underline decoration-blue-100 italic">বাকি রেকর্ড কখনো মুছবে না।</span>
+                                </p>
+                                <button onClick={handleYearlyCleanup}
+                                    className="bg-gray-800 text-white px-8 py-3 rounded-lg font-black text-sm uppercase tracking-widest hover:opacity-95 transition-all shadow-lg shadow-blue-50 active:scale-95">
+                                    পরিষ্কার করুন
+                                </button>
                             </div>
                         </div>
                     )}

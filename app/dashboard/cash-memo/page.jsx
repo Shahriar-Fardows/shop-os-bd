@@ -8,8 +8,9 @@ import {
 import Swal from 'sweetalert2';
 
 const DEFAULT_MEMO = {
-    shopName: 'Your Shop Name',
+    shopName: '',
     shopTagline: 'Computer · Print · Photocopy · Scan',
+    shopLogo: '',          // base64 data URL
     shopAddress: '',
     shopPhone: '',
     memoNo: '',
@@ -53,8 +54,18 @@ export default function CashMemoPage() {
 
     useEffect(() => {
         try {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const initialMemo = { ...DEFAULT_MEMO };
+            if (user.shopName) initialMemo.shopName = user.shopName;
+            if (user.mobileNumber) initialMemo.shopPhone = user.mobileNumber;
+            if (user.city) initialMemo.shopAddress = user.city;
+
             const saved = localStorage.getItem(DRAFT_KEY);
-            if (saved) setMemo({ ...DEFAULT_MEMO, ...JSON.parse(saved) });
+            if (saved) {
+                setMemo({ ...initialMemo, ...JSON.parse(saved) });
+            } else {
+                setMemo(initialMemo);
+            }
             const savedStep = localStorage.getItem(DRAFT_KEY + '-step');
             if (savedStep) setStep(Math.min(parseInt(savedStep) || 0, STEPS.length - 1));
         } catch {}
@@ -70,6 +81,18 @@ export default function CashMemoPage() {
     }, [memo, step, loaded]);
 
     const update = (key, val) => setMemo((m) => ({ ...m, [key]: val }));
+
+    const handleLogoUpload = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) {
+            Swal.fire('Too large', 'Logo 2MB er niche rakhun.', 'error');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => update('shopLogo', ev.target.result);
+        reader.readAsDataURL(file);
+    };
     const addItem = () => update('items', [...memo.items, { name: '', qty: 1, rate: 0 }]);
     const removeItem = (i) => update('items', memo.items.filter((_, idx) => idx !== i));
     const updateItem = (i, key, val) => update('items', memo.items.map((it, idx) => idx === i ? { ...it, [key]: val } : it));
@@ -193,6 +216,32 @@ export default function CashMemoPage() {
                         <div className="space-y-3">
                             {current.id === 'shop' && (
                                 <>
+                                    <Field label="Shop Logo">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-16 h-16 rounded-xl border-2 border-dashed border-blue-200 bg-blue-50/40 flex items-center justify-center overflow-hidden shrink-0">
+                                                {memo.shopLogo ? (
+                                                    <img src={memo.shopLogo} alt="logo" className="w-full h-full object-contain" />
+                                                ) : (
+                                                    <span className="text-[9px] font-extrabold text-blue-300 uppercase tracking-widest text-center px-1">No Logo</span>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 flex flex-col gap-1.5">
+                                                <label className="cursor-pointer text-center px-3 py-2 rounded-lg bg-[#1e6bd6] hover:bg-[#1656ac] text-white text-[10px] font-extrabold uppercase tracking-widest">
+                                                    {memo.shopLogo ? 'Change Logo' : 'Upload Logo'}
+                                                    <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+                                                </label>
+                                                {memo.shopLogo && (
+                                                    <button
+                                                        onClick={() => update('shopLogo', '')}
+                                                        className="px-3 py-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 text-[10px] font-extrabold uppercase tracking-widest"
+                                                    >
+                                                        Remove Logo
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <p className="text-[10px] font-bold text-gray-400 mt-1.5 uppercase tracking-widest">PNG / JPG · max 2MB · saved in browser</p>
+                                    </Field>
                                     <Field label="Shop Name">
                                         <input value={memo.shopName} onChange={(e) => update('shopName', e.target.value)} className={inputClass} />
                                     </Field>
@@ -205,7 +254,7 @@ export default function CashMemoPage() {
                                     <Field label="Phone / Mobile">
                                         <input value={memo.shopPhone} onChange={(e) => update('shopPhone', e.target.value)} placeholder="01XXXXXXXXX" className={inputClass} />
                                     </Field>
-                                    <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-widest">Shop info auto-saved. Set once — reused for every memo.</p>
+                                    <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-widest">Shop info + logo auto-saved. Set once — reused for every memo.</p>
                                 </>
                             )}
 
@@ -378,16 +427,25 @@ export default function CashMemoPage() {
                             justifyContent: 'space-between',
                             alignItems: 'flex-start'
                         }}>
-                            <div>
-                                <h1 style={{ color: memo.primary, fontSize: '22pt', fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>
-                                    {memo.shopName || 'Your Shop'}
-                                </h1>
-                                <div style={{ fontSize: '10pt', fontWeight: 600, color: '#6b7280', marginTop: '2pt' }}>
-                                    {memo.shopTagline}
-                                </div>
-                                <div style={{ fontSize: '9.5pt', marginTop: '4pt', color: '#374151' }}>
-                                    {memo.shopAddress && <div>{memo.shopAddress}</div>}
-                                    {memo.shopPhone && <div><strong>Mobile:</strong> {memo.shopPhone}</div>}
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14pt' }}>
+                                {memo.shopLogo && (
+                                    <img
+                                        src={memo.shopLogo}
+                                        alt="Shop logo"
+                                        style={{ width: '64pt', height: '64pt', objectFit: 'contain', borderRadius: '6pt', flexShrink: 0 }}
+                                    />
+                                )}
+                                <div>
+                                    <h1 style={{ color: memo.primary, fontSize: '22pt', fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>
+                                        {memo.shopName}
+                                    </h1>
+                                    <div style={{ fontSize: '10pt', fontWeight: 600, color: '#6b7280', marginTop: '2pt' }}>
+                                        {memo.shopTagline}
+                                    </div>
+                                    <div style={{ fontSize: '9.5pt', marginTop: '4pt', color: '#374151' }}>
+                                        {memo.shopAddress && <div>{memo.shopAddress}</div>}
+                                        {memo.shopPhone && <div><strong>Mobile:</strong> {memo.shopPhone}</div>}
+                                    </div>
                                 </div>
                             </div>
                             <div style={{

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, Suspense } from 'react';
-import { FiMail, FiLock, FiUser, FiPhone, FiMapPin, FiArrowRight, FiGift } from 'react-icons/fi';
+import { FiMail, FiLock, FiUser, FiPhone, FiMapPin, FiArrowRight, FiGift, FiLayers } from 'react-icons/fi';
 import Link from 'next/link';
 import Swal from 'sweetalert2';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -13,7 +13,7 @@ function RegisterInner() {
   const refFromUrl = searchParams.get('ref') || '';
 
   const [formData, setFormData] = useState({
-    name: '', email: '', password: '', mobileNumber: '', city: '',
+    name: '', email: '', password: '', mobileNumber: '', city: '', shopName: '',
     referralCode: refFromUrl.toUpperCase(),
   });
   const [refInfo, setRefInfo] = useState(null); // referral discount preview
@@ -143,6 +143,20 @@ function RegisterInner() {
                 placeholder="name@example.com"
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Shop / Brand Name</label>
+            <div className="relative group">
+              <FiLayers className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand" size={18} />
+              <input
+                type="text" required
+                className="w-full bg-gray-50 border border-gray-100 rounded-lg py-2.5 pl-11 pr-4 text-xs focus:bg-white focus:border-brand outline-none transition-all"
+                placeholder="Rahim Store"
+                value={formData.shopName}
+                onChange={(e) => setFormData({...formData, shopName: e.target.value})}
               />
             </div>
           </div>
