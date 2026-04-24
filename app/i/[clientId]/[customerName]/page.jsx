@@ -61,8 +61,12 @@ function InvoiceContent({ params }) {
                 <div className="max-w-xl mx-auto relative z-10">
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 bg-white text-[#1e6bd6] rounded-2xl flex items-center justify-center text-2xl font-black shadow-lg">
-                                {data.shop.name?.[0]?.toUpperCase()}
+                            <div className="w-14 h-14 bg-white text-[#1e6bd6] rounded-2xl flex items-center justify-center text-2xl font-black shadow-lg overflow-hidden border border-white/50">
+                                {data.shop.logo ? (
+                                    <img src={data.shop.logo} alt="Shop Logo" className="w-full h-full object-cover" />
+                                ) : (
+                                    data.shop.name?.[0]?.toUpperCase()
+                                )}
                             </div>
                             <div>
                                 <h1 className="text-xl font-black tracking-tight">{data.shop.name}</h1>

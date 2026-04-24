@@ -10,7 +10,6 @@ import useAxios from '@/hooks/useAxios';
 import Swal from 'sweetalert2';
 import { getActiveTools } from '@/lib/tools';
 
-// Tool keys must match server/src/app/modules/platform-config/tools.catalog.ts
 const TOOL_LINKS = [
     { key: 'digitalKhata',      href: '/dashboard/accounting',          label: 'ডিজিটাল খাতা',         icon: FiDollarSign },
     { key: 'digitalKhata',      href: '/dashboard/inventory',           label: 'পণ্য ইনভেন্টরি',        icon: FiBox },
@@ -28,10 +27,19 @@ const Sidebar = ({ handleLogout }) => {
     const pathname = usePathname();
     const router = useRouter();
     const api = useAxios();
+    
+    const [user, setUser] = useState(null);
     const [hasUnread, setHasUnread] = useState(false);
     const [activeTools, setActiveTools] = useState([]);
     const [supportAllowed, setSupportAllowed] = useState(true);
     const audioRef = useRef(null);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) setUser(JSON.parse(savedUser));
+        }
+    }, []);
 
     useEffect(() => {
         let alive = true;
@@ -42,9 +50,13 @@ const Sidebar = ({ handleLogout }) => {
                     fetch(`${process.env.NEXT_PUBLIC_API_URL}/platform-config`).then(r => r.json()).catch(() => null),
                 ]);
                 if (!alive) return;
-                const user = meRes?.data?.data || null;
+                const userData = meRes?.data?.data || null;
+                if (userData) {
+                    setUser(userData);
+                    localStorage.setItem('user', JSON.stringify(userData));
+                }
                 const config = cfgRes?.data || null;
-                const tools = getActiveTools(user, config);
+                const tools = getActiveTools(userData, config);
                 setActiveTools(tools);
                 setSupportAllowed(tools.includes('support'));
             } catch {}
@@ -125,11 +137,17 @@ const Sidebar = ({ handleLogout }) => {
         <aside className="w-64 border-r border-gray-100 flex flex-col h-screen bg-white font-nunito shadow-sm">
             <audio ref={audioRef} src="https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3" />
 
-            <div className="p-6 flex items-center gap-3">
-                <img src="/shoposbd.png" alt="ShopOS BD" className="w-10 h-10 object-contain" />
-                <div className="flex flex-col">
-                    <h1 className="text-sm font-extrabold tracking-tight text-gray-800 uppercase leading-none">ShopOS BD</h1>
-                    <span className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest">শপ কনসোল</span>
+            <div className="p-6 flex items-center gap-3 border-b border-gray-50 mb-2">
+                <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden border border-gray-100">
+                    <img src={user?.logo || "/shoposbd.png"} alt="Shop Logo" className="w-full h-full object-cover" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                    <h1 className="text-sm font-black tracking-tight text-gray-800 uppercase leading-none truncate" title={user?.shopName || "ShopOS BD"}>
+                        {user?.shopName || "ShopOS BD"}
+                    </h1>
+                    <span className="text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-widest truncate">
+                        {user?.name || "Administrator"}
+                    </span>
                 </div>
             </div>
 

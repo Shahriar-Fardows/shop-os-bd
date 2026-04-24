@@ -59,6 +59,7 @@ export default function CashMemoPage() {
             if (user.shopName) initialMemo.shopName = user.shopName;
             if (user.mobileNumber) initialMemo.shopPhone = user.mobileNumber;
             if (user.city) initialMemo.shopAddress = user.city;
+            if (user.logo) initialMemo.shopLogo = user.logo;
 
             const saved = localStorage.getItem(DRAFT_KEY);
             if (saved) {

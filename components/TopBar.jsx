@@ -104,7 +104,7 @@ const TopBar = () => {
 
                 <button
                     onClick={handleOpenWhatsapp}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#25D366] text-white rounded-lg text-xs font-black hover:bg-[#128C7E] transition-all shadow-lg shadow-emerald-100 group"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#25D366] text-white rounded-lg text-xs font-black hover:bg-[#128C7E] transition-all group"
                 >
                     <FaWhatsapp size={18} className="group-hover:scale-110 transition-transform" />
                     <span>OPEN WHATSAPP</span>
@@ -117,7 +117,7 @@ const TopBar = () => {
                 {/* Current Plan Badge — replaces the old notification bell */}
                 <Link
                     href="/dashboard/subscribe"
-                    className={`flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl border transition-all hover:shadow-sm ${planStyle.bg} ${planStyle.border}`}
+                    className={`flex items-center gap-2.5 px-3.5 py-1.5 rounded-lg border transition-all hover:shadow-none ${planStyle.bg} ${planStyle.border}`}
                     title={isPaidActive ? `Expires on ${expiryLabel}` : 'Upgrade to unlock more tools'}
                 >
                     <div className={`relative ${planStyle.icon}`}>
@@ -148,8 +148,12 @@ const TopBar = () => {
                             {isPaidActive ? 'Verified Partner' : 'Standard Store'}
                         </p>
                     </div>
-                    <div className="w-10 h-10 rounded-lg bg-blue-50 text-brand flex items-center justify-center text-sm font-extrabold shadow-sm border border-blue-100 uppercase italic">
-                        {getInitials(user?.name)}
+                    <div className="w-10 h-10 rounded-lg bg-blue-50 text-brand flex items-center justify-center text-sm font-extrabold shadow-none border border-blue-100 uppercase italic overflow-hidden">
+                        {user?.logo ? (
+                            <img src={user.logo} alt="Logo" className="w-full h-full object-cover" />
+                        ) : (
+                            getInitials(user?.name)
+                        )}
                     </div>
                 </div>
             </div>
