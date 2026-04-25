@@ -1,15 +1,80 @@
-"use client";
-import { useState, useEffect, useMemo } from 'react';
+﻿"use client";
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
     FiArrowRight, FiFileText, FiFile, FiMail, FiGrid,
     FiImage, FiActivity, FiCreditCard, FiScissors,
     FiCheck, FiZap, FiShield, FiUsers, FiPackage,
     FiRefreshCw, FiPhone, FiExternalLink, FiStar, FiChevronRight,
-    FiLink, FiTarget, FiTrendingUp, FiCpu
+    FiLink, FiTarget, FiTrendingUp, FiCpu, FiGlobe, FiMapPin
 } from 'react-icons/fi';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+
+const SOUTH_ASIA = ['BD','IN','PK','LK','NP','BT','MV','AF','MM','PH','ID','MY','TH','VN'];
+
+const PRICING = {
+    web: {
+        label: 'Web & Development', icon: FiCpu,
+        global: [
+            { name: 'Starter',     dot: '#22c55e', price: '$2,600', period: '/month', slots: '3 Slots Available', badge: null,          features: ['40 hours / month','Full-stack team','Website + development support','1 active request','Slack / Loom communication','2 meetings / month','Same-day response','Weekly updates & reports'] },
+            { name: 'Accelerate',  dot: '#3b82f6', price: '$4,800', period: '/month', slots: '2 Slots Available', badge: null,          features: ['80 hours / month','2 active requests','Priority delivery','Weekly meetings','Same-day response','Full support'] },
+            { name: 'Scale',       dot: '#a855f7', price: '$7,800', period: '/month', slots: 'Limited Availability', badge: 'Most Popular', features: ['160 hours / month','3–4 active requests','Dedicated manager','Priority support','Up to 8 meetings / month'] },
+            { name: 'Enterprise',  dot: '#ef4444', price: "Let's Talk", period: '', slots: null, badge: null, consultation: true, features: ['Unlimited hours','Custom team size','Full dedicated team','SLA guarantees','Custom integrations'] },
+        ],
+        southAsia: [
+            { name: 'Starter',     dot: '#22c55e', price: '$699',   period: '/month', slots: null, badge: null,          features: ['40 hours / month','Full-stack team','Website + development support','1 active request','Slack / Loom communication','2 meetings / month','Same-day response','Weekly updates & reports'] },
+            { name: 'Accelerate',  dot: '#3b82f6', price: '$1,299', period: '/month', slots: null, badge: null,          features: ['80 hours / month','2 active requests','Priority delivery','Weekly meetings','Same-day response','Full support'] },
+            { name: 'Scale',       dot: '#a855f7', price: '$2,499', period: '/month', slots: null, badge: 'Most Popular', features: ['160 hours / month','3–4 active requests','Dedicated manager','Priority support','Up to 8 meetings / month'] },
+            { name: 'Enterprise',  dot: '#ef4444', price: "Let's Talk", period: '', slots: null, badge: null, consultation: true, features: ['Unlimited hours','Custom team size','Full dedicated team','SLA guarantees','Custom integrations'] },
+        ],
+    },
+    marketing: {
+        label: 'Marketing', icon: FiTrendingUp,
+        global: [
+            { name: 'Starter',  dot: '#22c55e', price: '$399',   period: '/month', slots: null, badge: null,          features: ['Ads setup & management','Basic SEO','Conversion tracking','Monthly reports'] },
+            { name: 'Growth',   dot: '#3b82f6', price: '$799',   period: '/month', slots: null, badge: null,          features: ['SEO + Paid Ads','Campaign optimization','Audience targeting','Bi-weekly reports'] },
+            { name: 'Scale',    dot: '#a855f7', price: '$1,499', period: '/month', slots: null, badge: 'Most Popular', features: ['Full funnel marketing','A/B testing','Multi-platform ads','Weekly strategy calls','Advanced analytics'] },
+            { name: 'Enterprise', dot: '#ef4444', price: "Let's Talk", period: '', slots: null, badge: null, consultation: true, features: ['Dedicated team','Full brand management','Omnichannel campaigns'] },
+        ],
+        southAsia: [
+            { name: 'Starter',  dot: '#22c55e', price: '$149', period: '/month', slots: null, badge: null,          features: ['Ads setup & management','Basic SEO','Conversion tracking','Monthly reports'] },
+            { name: 'Growth',   dot: '#3b82f6', price: '$299', period: '/month', slots: null, badge: null,          features: ['SEO + Paid Ads','Campaign optimization','Audience targeting','Bi-weekly reports'] },
+            { name: 'Scale',    dot: '#a855f7', price: '$599', period: '/month', slots: null, badge: 'Most Popular', features: ['Full funnel marketing','A/B testing','Multi-platform ads','Weekly strategy calls','Advanced analytics'] },
+            { name: 'Enterprise', dot: '#ef4444', price: "Let's Talk", period: '', slots: null, badge: null, consultation: true, features: ['Dedicated team','Full brand management','Omnichannel campaigns'] },
+        ],
+    },
+    automation: {
+        label: 'Automation', icon: FiZap,
+        global: [
+            { name: 'Starter',  dot: '#22c55e', price: '$499',   period: '', oneTime: true, slots: null, badge: null,          features: ['Basic workflow automation','Up to 3 automations','Email / form triggers','Setup + documentation'] },
+            { name: 'Growth',   dot: '#3b82f6', price: '$999',   period: '', oneTime: true, slots: null, badge: null,          features: ['CRM integration','Lead automation','Up to 8 automations','Zapier / Make setup'] },
+            { name: 'Scale',    dot: '#a855f7', price: '$1,499', period: '', oneTime: true, slots: null, badge: 'Most Popular', features: ['Multi-step automations','Advanced CRM workflows','API integrations','Unlimited automations','Priority support'] },
+            { name: 'Enterprise', dot: '#ef4444', price: "Let's Talk", period: '', slots: null, badge: null, consultation: true, features: ['Custom enterprise flows','Full system integration','Dedicated engineer','SLA & uptime guarantee'] },
+        ],
+        southAsia: [
+            { name: 'Starter',  dot: '#22c55e', price: '$199', period: '', oneTime: true, slots: null, badge: null,          features: ['Basic workflow automation','Up to 3 automations','Email / form triggers','Setup + documentation'] },
+            { name: 'Growth',   dot: '#3b82f6', price: '$349', period: '', oneTime: true, slots: null, badge: null,          features: ['CRM integration','Lead automation','Up to 8 automations','Zapier / Make setup'] },
+            { name: 'Scale',    dot: '#a855f7', price: '$699', period: '', oneTime: true, slots: null, badge: 'Most Popular', features: ['Multi-step automations','Advanced CRM workflows','API integrations','Unlimited automations','Priority support'] },
+            { name: 'Enterprise', dot: '#ef4444', price: "Let's Talk", period: '', slots: null, badge: null, consultation: true, features: ['Custom enterprise flows','Full system integration','Dedicated engineer','SLA & uptime guarantee'] },
+        ],
+    },
+    growth: {
+        label: 'Growth Suite', icon: FiTarget,
+        global: [
+            { name: 'Starter',  dot: '#22c55e', price: '$999',   period: '/month', slots: null, badge: null,          features: ['Website development','Basic marketing setup','Lead capture forms','Monthly reporting'] },
+            { name: 'Growth',   dot: '#3b82f6', price: '$1,999', period: '/month', slots: null, badge: null,          features: ['Full funnel system','CRM + automation','Paid ads management','Bi-weekly strategy','A/B testing'] },
+            { name: 'Scale',    dot: '#a855f7', price: '$2,999', period: '/month', slots: null, badge: 'Most Popular', features: ['Full system build','Marketing + automation','Dedicated manager','Weekly meetings','Priority support','Advanced analytics'] },
+            { name: 'Enterprise', dot: '#ef4444', price: "Let's Talk", period: '', slots: null, badge: null, consultation: true, features: ['Fully custom scope','Dedicated full team','Multi-market strategy','Custom integrations','SLA included'] },
+        ],
+        southAsia: [
+            { name: 'Starter',  dot: '#22c55e', price: '$399', period: '/month', slots: null, badge: null,          features: ['Website development','Basic marketing setup','Lead capture forms','Monthly reporting'] },
+            { name: 'Growth',   dot: '#3b82f6', price: '$699', period: '/month', slots: null, badge: null,          features: ['Full funnel system','CRM + automation','Paid ads management','Bi-weekly strategy','A/B testing'] },
+            { name: 'Scale',    dot: '#a855f7', price: '$999', period: '/month', slots: null, badge: 'Most Popular', features: ['Full system build','Marketing + automation','Dedicated manager','Weekly meetings','Priority support','Advanced analytics'] },
+            { name: 'Enterprise', dot: '#ef4444', price: "Let's Talk", period: '', slots: null, badge: null, consultation: true, features: ['Fully custom scope','Dedicated full team','Multi-market strategy','Custom integrations','SLA included'] },
+        ],
+    },
+};
 
 const TOOLS = [
     { icon: FiFileText, label: 'CV / Bio-Data Maker', desc: 'প্রফেশনাল CV তৈরি করুন মিনিটে', color: 'blue' },
@@ -23,30 +88,27 @@ const TOOLS = [
 ];
 
 export default function HomePage() {
-    const [plans, setPlans] = useState([]);
     const [links, setLinks] = useState([]);
-    const [loadingPlans, setLoadingPlans] = useState(true);
     const [loadingLinks, setLoadingLinks] = useState(true);
-    const [activeTab, setActiveTab] = useState('monthly'); 
+    const [region, setRegion] = useState('global');
+    const [regionLoading, setRegionLoading] = useState(true);
+    const [activeService, setActiveService] = useState('web');
 
     useEffect(() => {
-        fetch(`${API}/packages`)
-            .then(r => r.json())
-            .then(d => setPlans(d.data || []))
-            .catch(() => setPlans([]))
-            .finally(() => setLoadingPlans(false));
-
         fetch(`${API}/links/public-links`)
             .then(r => r.json())
             .then(d => setLinks(d.data || []))
             .catch(() => setLinks([]))
             .finally(() => setLoadingLinks(false));
-    }, []);
 
-    const filteredPlans = useMemo(() => {
-        const months = activeTab === 'monthly' ? 1 : activeTab === '6months' ? 6 : 12;
-        return plans.filter(p => p.durationInMonths === months && p.status === 'active');
-    }, [plans, activeTab]);
+        fetch('/api/geo')
+            .then(r => r.json())
+            .then(d => {
+                setRegion(d.region === 'southAsia' ? 'southAsia' : 'global');
+            })
+            .catch(() => setRegion('global'))
+            .finally(() => setRegionLoading(false));
+    }, []);
 
     return (
         <div className="min-h-screen bg-white font-nunito selection:bg-blue-100 selection:text-blue-900 overflow-x-hidden">
@@ -302,95 +364,165 @@ export default function HomePage() {
             {/* ── PRICING SECTION ────────────────────── */}
             <section id="pricing" className="py-32 bg-white relative">
                 <div className="container mx-auto px-6">
-                    <div className="text-center mb-24">
+
+                    {/* Header */}
+                    <div className="text-center mb-16">
                         <span className="text-[11px] font-black text-[#1e6bd6] uppercase tracking-[4px] mb-4 block">Pricing Plans</span>
-                        <h2 className="text-4xl md:text-6xl font-black text-gray-900 mb-12 tracking-tight">আপনার ব্যবসাকে বড় করুন</h2>
-                        
-                        <div className="inline-flex bg-gray-100 p-2 rounded-lg mb-6">
-                            {[
-                                { id: 'monthly', label: 'Monthly' },
-                                { id: '6months', label: '6 Months' },
-                                { id: 'yearly', label: 'Yearly (Best Value)' },
-                            ].map(tab => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`px-8 py-3.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
-                                        activeTab === tab.id 
-                                        ? 'bg-white text-[#1e6bd6] shadow-none  scale-105' 
-                                        : 'text-gray-500 hover:text-gray-700'
-                                    }`}
-                                >
-                                    {tab.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                        <h2 className="text-4xl md:text-6xl font-black text-gray-900 mb-8 tracking-tight">আপনার ব্যবসাকে বড় করুন</h2>
 
-                    {loadingPlans ? (
-                        <div className="text-center py-24">
-                            <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-6" />
-                            <p className="text-sm font-black text-gray-400 uppercase tracking-widest">প্ল্যানগুলো সাজানো হচ্ছে...</p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-7xl mx-auto">
-                            {filteredPlans.map((plan, index) => {
-                                const isMiddle = index === 1; 
-                                return (
-                                    <div key={plan._id}
-                                         className={`group bg-white rounded-lg border p-12 flex flex-col h-full transition-all duration-700 ${
-                                             isMiddle
-                                                 ? 'border-blue-600 shadow-none ring-8 ring-blue-50 relative z-10 scale-105'
-                                                 : 'border-gray-100 shadow-none hover:scale-[1.02]'
-                                         }`}>
-                                        
-                                        {isMiddle && (
-                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-600 to-blue-400 text-white px-8 py-2 rounded-full shadow-none">
-                                                <span className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                                                    <FiZap size={14} className="animate-pulse" /> Most Popular
-                                                </span>
-                                            </div>
-                                        )}
-                                        
-                                        <div className="mb-12">
-                                            <h3 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">{plan.name}</h3>
-                                            <p className="text-base font-medium text-gray-500 leading-relaxed">{plan.description}</p>
-                                        </div>
-
-                                        <div className="flex items-baseline gap-2 mb-12 pb-12 border-b border-gray-50">
-                                            <span className="text-6xl font-black text-gray-900 tracking-tighter">৳{plan.price}</span>
-                                            <span className="text-sm font-black text-gray-400 uppercase tracking-widest">/ {activeTab}</span>
-                                        </div>
-
-                                        <div className="space-y-6 mb-16 flex-1">
-                                            {(plan.features || []).map((f, fi) => (
-                                                <div key={fi} className="flex items-start gap-4">
-                                                    <div className="mt-1 w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                                                        <FiCheck size={14} />
-                                                    </div>
-                                                    <span className="text-base font-bold text-gray-600 leading-snug">{f}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        <Link
-                                            href={`/register?plan=${plan._id}`}
-                                            className={`w-full flex items-center justify-center gap-4 py-6 rounded-lg font-black text-sm uppercase tracking-[0.2em] transition-all shadow-none ${
-                                                isMiddle
-                                                    ? 'bg-[#1e6bd6] text-white hover:bg-blue-700'
-                                                    : 'bg-gray-50 text-gray-700 hover:bg-blue-600 hover:text-white'
-                                            }`}
-                                        >
-                                            Get Started <FiArrowRight size={20} />
-                                        </Link>
+                        {/* Region Indicator & Toggle */}
+                        <div className="flex items-center justify-center gap-3 mb-12">
+                            {regionLoading ? (
+                                <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                                <>
+                                    <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 px-4 py-2 rounded-full">
+                                        <FiMapPin size={13} className="text-blue-500" />
+                                        <span className="text-xs font-black text-blue-700 uppercase tracking-wider">
+                                            {region === 'southAsia' ? '🌏 South Asia Pricing' : '🌍 Global Pricing'}
+                                        </span>
                                     </div>
+                                    <button
+                                        onClick={() => setRegion(r => r === 'global' ? 'southAsia' : 'global')}
+                                        className="flex items-center gap-2 text-xs font-black text-gray-400 hover:text-blue-600 uppercase tracking-wider transition-colors border border-gray-200 px-4 py-2 rounded-full hover:border-blue-300"
+                                    >
+                                        <FiGlobe size={13} />
+                                        Switch to {region === 'global' ? 'South Asia' : 'Global'}
+                                    </button>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Service Tabs */}
+                        <div className="inline-flex flex-wrap justify-center bg-gray-100 p-2 rounded-xl gap-1">
+                            {Object.entries(PRICING).map(([key, svc]) => {
+                                const Icon = svc.icon;
+                                return (
+                                    <button
+                                        key={key}
+                                        onClick={() => setActiveService(key)}
+                                        className={`flex items-center gap-2 px-6 py-3 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
+                                            activeService === key
+                                                ? 'bg-white text-[#1e6bd6] shadow-sm scale-105'
+                                                : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                    >
+                                        <Icon size={14} /> {svc.label}
+                                    </button>
                                 );
                             })}
                         </div>
-                    )}
+                    </div>
+
+                    {/* Plan Cards */}
+                    {(() => {
+                        const plans = PRICING[activeService]?.[region] || [];
+                        return (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8 max-w-7xl mx-auto">
+                                {plans.map((plan, i) => {
+                                    const isPopular = plan.badge === 'Most Popular';
+                                    const dotBg = {
+                                        '#22c55e': 'bg-green-500',
+                                        '#3b82f6': 'bg-blue-500',
+                                        '#a855f7': 'bg-purple-500',
+                                        '#ef4444': 'bg-red-500',
+                                    };
+                                    return (
+                                        <div
+                                            key={i}
+                                            className={`relative flex flex-col rounded-2xl border transition-all duration-500 overflow-hidden ${
+                                                isPopular
+                                                    ? 'border-[#a855f7] ring-4 ring-purple-50 scale-[1.03] z-10 bg-white shadow-2xl shadow-purple-100'
+                                                    : 'border-gray-100 bg-white hover:scale-[1.02] hover:shadow-lg hover:border-gray-200'
+                                            }`}
+                                        >
+                                            <div className="h-1 w-full" style={{ backgroundColor: plan.dot }} />
+
+                                            <div className="p-8 flex flex-col flex-1">
+
+                                                {isPopular && (
+                                                    <div className="inline-flex self-start items-center gap-1.5 bg-purple-100 text-purple-700 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full mb-5">
+                                                        <FiStar size={10} /> Most Popular
+                                                    </div>
+                                                )}
+
+                                                {plan.consultation ? (
+                                                    <>
+                                                        <p className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] mb-1">Custom Pricing</p>
+                                                        <div className="flex items-end gap-1 mb-2">
+                                                            <span className="text-5xl font-black text-gray-900 tracking-tighter leading-none">Let&apos;s Talk</span>
+                                                        </div>
+                                                        <p className="text-[11px] font-bold text-red-500 mb-3 block leading-snug">
+                                                            Price decided after a free consultation call
+                                                        </p>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <p className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] mb-1">Starting from</p>
+                                                        <div className="flex items-end gap-1 mb-1">
+                                                            <span className="text-5xl font-black text-gray-900 tracking-tighter leading-none">{plan.price}</span>
+                                                            {plan.period && (
+                                                                <span className="text-sm font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">{plan.period}</span>
+                                                            )}
+                                                            {plan.oneTime && (
+                                                                <span className="text-sm font-black text-gray-400 uppercase tracking-widest mb-1 ml-1">one-time</span>
+                                                            )}
+                                                        </div>
+                                                        {region === 'southAsia' && (
+                                                            <span className="text-[11px] font-bold text-blue-500 mb-3 block">South Asia pricing</span>
+                                                        )}
+                                                    </>
+                                                )}
+
+                                                <div className="flex items-center gap-2 mt-4 mb-1">
+                                                    <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${dotBg[plan.dot] || 'bg-gray-400'}`} />
+                                                    <h3 className="text-lg font-black text-gray-900 tracking-tight">{plan.name}</h3>
+                                                </div>
+
+                                                {plan.slots && (
+                                                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-5">
+                                                        {plan.slots}{plan.name === 'Starter' ? ' | Cancel Anytime' : ''}
+                                                    </p>
+                                                )}
+
+                                                <div className="border-t border-gray-100 my-5" />
+
+                                                <ul className="space-y-3 mb-8 flex-1">
+                                                    {plan.features.map((f, fi) => (
+                                                        <li key={fi} className="flex items-start gap-3">
+                                                            <div className="mt-0.5 w-5 h-5 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                                                                <FiCheck size={11} />
+                                                            </div>
+                                                            <span className="text-sm font-semibold text-gray-600 leading-snug">{f}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+
+                                                <a
+                                                    href="#contact"
+                                                    className={`w-full flex items-center justify-center gap-3 py-4 rounded-xl font-black text-xs uppercase tracking-[0.15em] transition-all ${
+                                                        plan.consultation
+                                                            ? 'bg-gray-900 text-white hover:bg-gray-700'
+                                                            : isPopular
+                                                                ? 'bg-[#a855f7] text-white hover:bg-purple-700'
+                                                                : 'bg-gray-50 text-gray-700 hover:bg-[#1e6bd6] hover:text-white'
+                                                    }`}
+                                                >
+                                                    {plan.consultation ? 'Free Consultation' : 'Book a Call'} <FiArrowRight size={13} />
+                                                </a>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        );
+                    })()}
+
+                    <p className="text-center text-xs font-bold text-gray-400 mt-14 uppercase tracking-widest">
+                        No contracts · Cancel anytime · Enterprise price decided after a free consultation call
+                    </p>
                 </div>
             </section>
-
             {/* ── FOOTER ─────────────────────────────── */}
             <footer className="pt-32 pb-16 bg-[#fafbfc] border-t border-gray-100">
                 <div className="container mx-auto px-6 text-center">
