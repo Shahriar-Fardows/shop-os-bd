@@ -95,29 +95,30 @@ function InvoiceContent({ params }) {
             <div className="max-w-xl mx-auto px-6 -mt-12 space-y-6 relative z-20">
                 
                 {/* Summary Card */}
-                <div className="bg-white rounded-[32px] shadow-xl shadow-gray-200/50 p-8 border border-white overflow-hidden relative">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-red-50 rounded-full -mr-16 -mt-16 opacity-50" />
+                <div className="bg-white rounded-[32px] shadow-xl shadow-blue-900/5 p-8 border border-white overflow-hidden relative group">
+                    <div className="absolute top-0 right-0 w-40 h-40 bg-red-50 rounded-full -mr-20 -mt-20 transition-transform group-hover:scale-110 duration-700 opacity-60" />
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-50 rounded-full -ml-12 -mb-12 opacity-40" />
                     
                     <div className="text-center relative z-10">
-                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">মোট বকেয়া পরিমাণ</p>
-                        <h3 className="text-5xl font-black text-red-500 mb-4 tracking-tighter">
-                            <span className="text-2xl mr-1">৳</span>
-                            {data.totalDue?.toLocaleString('bn-BD')}
-                        </h3>
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-widest">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-500 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
                             <FiAlertCircle size={12} />
-                            পরিশোধের জন্য অনুরোধ করা হলো
+                            পরিশোধযোগ্য
                         </div>
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-2">মোট বকেয়া পরিমাণ</p>
+                        <h3 className="text-6xl font-black text-gray-900 mb-2 tracking-tighter flex items-center justify-center">
+                            <span className="text-3xl mr-1 text-red-500">৳</span>
+                            <span className="text-red-500">{data.totalDue?.toLocaleString('bn-BD')}</span>
+                        </h3>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 mt-8 pt-8 border-t border-gray-100">
-                        <div className="text-center border-r border-gray-100">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">মোট কেনাকাটা</p>
-                            <p className="text-lg font-black text-gray-800">৳{totalBill?.toLocaleString('bn-BD')}</p>
-                        </div>
+                    <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-dashed border-gray-100">
                         <div className="text-center">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">মোট কেনাকাটা</p>
+                            <p className="text-xl font-black text-gray-800 tracking-tight">৳{totalBill?.toLocaleString('bn-BD')}</p>
+                        </div>
+                        <div className="text-center border-l border-gray-100">
                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">মোট জমা</p>
-                            <p className="text-lg font-black text-emerald-500">৳{totalPaid?.toLocaleString('bn-BD')}</p>
+                            <p className="text-xl font-black text-emerald-500 tracking-tight">৳{totalPaid?.toLocaleString('bn-BD')}</p>
                         </div>
                     </div>
                 </div>
@@ -133,23 +134,65 @@ function InvoiceContent({ params }) {
 
                     <div className="space-y-3">
                         {data.transactions.map((t, i) => (
-                            <div key={i} className="group bg-white rounded-3xl p-5 border border-white hover:border-blue-100 transition-all shadow-sm hover:shadow-md">
-                                <div className="flex items-start justify-between gap-4">
+                            <div key={i} className="group bg-white rounded-3xl p-6 border border-white hover:border-blue-100 transition-all shadow-sm hover:shadow-md relative overflow-hidden">
+                                {/* Receipt Header */}
+                                <div className="flex items-start justify-between gap-4 mb-4">
                                     <div className="flex flex-col">
-                                        <h5 className="font-black text-gray-800 leading-tight mb-1">{t.title}</h5>
-                                        <div className="text-[10px] font-bold text-gray-400">
+                                        <div className="text-[10px] font-black text-[#1e6bd6] uppercase tracking-widest mb-1">
+                                            লেনদেন #{t._id?.slice(-6).toUpperCase()}
+                                        </div>
+                                        <h5 className="font-black text-gray-800 leading-tight text-lg">{t.title}</h5>
+                                        <div className="text-[10px] font-bold text-gray-400 mt-1 flex items-center gap-1">
+                                            <FiClock size={10} />
                                             <span>{fmt(t.date)}</span>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-lg font-black text-red-500">৳{t.dueAmount?.toLocaleString('bn-BD')}</p>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">বাকি</p>
+                                        <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${t.dueAmount > 0 ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                                            {t.dueAmount > 0 ? 'বাকি' : 'পরিশোধিত'}
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="mt-4 pt-4 border-t border-gray-50 flex justify-between items-center">
-                                    <span className="text-[11px] font-black text-gray-500 uppercase tracking-widest">মোট বিল: ৳{t.totalBill?.toLocaleString('bn-BD')}</span>
-                                    <span className="text-[11px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-md">জমা: ৳{t.paidAmount?.toLocaleString('bn-BD')}</span>
+                                {/* Items List (Receipt Body) */}
+                                {t.items && t.items.length > 0 ? (
+                                    <div className="py-4 border-y border-dashed border-gray-100 space-y-2">
+                                        {t.items.map((item, idx) => (
+                                            <div key={idx} className="flex justify-between items-center text-sm">
+                                                <span className="text-gray-600 font-medium">{item.name}</span>
+                                                <span className="text-gray-800 font-bold">৳{item.price?.toLocaleString('bn-BD')}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="py-4 border-y border-dashed border-gray-100">
+                                        <p className="text-xs text-gray-400 italic">কোনো আইটেম বিবরণ নেই</p>
+                                    </div>
+                                )}
+
+                                {/* Receipt Footer */}
+                                <div className="mt-4 pt-2">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">মোট বিল</span>
+                                        <span className="text-sm font-black text-gray-800">৳{t.totalBill?.toLocaleString('bn-BD')}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center mb-3">
+                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">জমা</span>
+                                        <span className="text-sm font-black text-emerald-500">৳{t.paidAmount?.toLocaleString('bn-BD')}</span>
+                                    </div>
+                                    
+                                    <div className="flex justify-between items-center pt-3 border-t border-gray-50">
+                                        <span className="text-xs font-black text-gray-500 uppercase tracking-widest">বর্তমান বাকি</span>
+                                        <span className="text-xl font-black text-red-500">৳{t.dueAmount?.toLocaleString('bn-BD')}</span>
+                                    </div>
+                                </div>
+
+                                {/* Decorative Dots for Receipt Look */}
+                                <div className="absolute -left-2 top-1/2 -translate-y-1/2 flex flex-col gap-1">
+                                    {[1,2,3,4,5].map(dot => <div key={dot} className="w-4 h-4 bg-[#f1f5f9] rounded-full" />)}
+                                </div>
+                                <div className="absolute -right-2 top-1/2 -translate-y-1/2 flex flex-col gap-1">
+                                    {[1,2,3,4,5].map(dot => <div key={dot} className="w-4 h-4 bg-[#f1f5f9] rounded-full" />)}
                                 </div>
                             </div>
                         ))}

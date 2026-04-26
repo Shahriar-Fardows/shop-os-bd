@@ -131,37 +131,48 @@ function InvoiceContent() {
                                 </span>
                             </div>
 
-                            {/* Transaction rows */}
-                            {data.transactions.map((t, i) => {
-                                const hasItems = t.items?.length > 0;
-                                return (
-                                    <div key={t._id || i} style={{
-                                        padding: '16px 18px',
-                                        borderBottom: i < count - 1 ? '1px solid #f3f4f6' : 'none',
-                                    }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 12 }}>
-                                            <div>
-                                                <p style={{ fontSize: 16, fontWeight: 800, color: '#1f2937', marginBottom: 2 }}>{t.title}</p>
-                                                <p style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>{fmt(t.date)}</p>
-                                            </div>
-                                            <div style={{ textAlign: 'right' }}>
-                                                <p style={{ fontSize: 18, fontWeight: 900, color: '#ef4444', lineHeight: 1 }}>৳{t.dueAmount?.toLocaleString('bn-BD')}</p>
-                                                <p style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', marginTop: 4 }}>বাকি</p>
-                                            </div>
-                                        </div>
+                             {/* Transaction rows */}
+                             {data.transactions.map((t, i) => {
+                                 const hasItems = t.items?.length > 0;
+                                 return (
+                                     <div key={t._id || i} style={{
+                                         padding: '16px 18px',
+                                         borderBottom: i < count - 1 ? '1px solid #f3f4f6' : 'none',
+                                     }}>
+                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 12 }}>
+                                             <div>
+                                                 <p style={{ fontSize: 16, fontWeight: 800, color: '#1f2937', marginBottom: 2 }}>{t.title}</p>
+                                                 <p style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>{fmt(t.date)}</p>
+                                             </div>
+                                             <div style={{ textAlign: 'right' }}>
+                                                 <p style={{ fontSize: 18, fontWeight: 900, color: '#ef4444', lineHeight: 1 }}>৳{t.dueAmount?.toLocaleString('bn-BD')}</p>
+                                                 <p style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', marginTop: 4 }}>বাকি</p>
+                                             </div>
+                                         </div>
 
-                                        <div style={{
-                                            display: 'flex', justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            background: '#f8fafc',
-                                            borderRadius: 10, padding: '9px 14px',
-                                        }}>
-                                            <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 700 }}>মোট বিল: ৳{t.totalBill?.toLocaleString('bn-BD')}</span>
-                                            <span style={{ fontSize: 12, fontWeight: 800, color: '#10b981' }}>জমা: ৳{t.paidAmount?.toLocaleString('bn-BD')}</span>
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                                         {hasItems && (
+                                             <div style={{ marginBottom: 12, padding: '8px 12px', border: '1px dashed #e5e7eb', borderRadius: 8 }}>
+                                                 {t.items.map((item, idx) => (
+                                                     <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+                                                         <span style={{ color: '#6b7280' }}>{item.name}</span>
+                                                         <span style={{ fontWeight: 700, color: '#374151' }}>৳{item.price?.toLocaleString('bn-BD')}</span>
+                                                     </div>
+                                                 ))}
+                                             </div>
+                                         )}
+
+                                         <div style={{
+                                             display: 'flex', justifyContent: 'space-between',
+                                             alignItems: 'center',
+                                             background: '#f8fafc',
+                                             borderRadius: 10, padding: '9px 14px',
+                                         }}>
+                                             <span style={{ fontSize: 11, color: '#6b7280', fontWeight: 800, textTransform: 'uppercase' }}>মোট: ৳{t.totalBill?.toLocaleString('bn-BD')}</span>
+                                             <span style={{ fontSize: 11, fontWeight: 800, color: '#10b981', textTransform: 'uppercase' }}>জমা: ৳{t.paidAmount?.toLocaleString('bn-BD')}</span>
+                                         </div>
+                                     </div>
+                                 );
+                             })}
                         </div>
                     )}
 
