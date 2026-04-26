@@ -10,9 +10,11 @@ export default function ClientLogin() {
   const router = useRouter();
   const api = useAxios();
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const res = await api.post('/client-auth/login', formData);
       localStorage.setItem('token', res.data.data.token);
@@ -34,6 +36,7 @@ export default function ClientLogin() {
         icon: 'error',
         confirmButtonColor: '#1e6bd6'
       });
+      setLoading(false);
     }
   };
 
@@ -80,9 +83,14 @@ export default function ClientLogin() {
 
           <button 
             type="submit" 
-            className="w-full bg-brand text-white rounded-lg py-3 font-bold text-sm flex items-center justify-center gap-3 hover:bg-brand-hover transition-all shadow-xl shadow-blue-50 mt-4 active:scale-95"
+            disabled={loading}
+            className={`w-full bg-brand text-white rounded-lg py-3 font-bold text-sm flex items-center justify-center gap-3 hover:bg-brand-hover transition-all shadow-xl shadow-blue-50 mt-4 active:scale-95 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
-            Sign In <FiArrowRight size={20} />
+            {loading ? (
+              <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Logging in...</>
+            ) : (
+              <>Sign In <FiArrowRight size={20} /></>
+            )}
           </button>
         </form>
 

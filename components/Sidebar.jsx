@@ -1,7 +1,7 @@
 "use client";
 import {
     FiHome, FiHelpCircle, FiUser, FiLogOut, FiLink, FiDollarSign, FiImage,
-    FiCreditCard, FiScissors, FiFileText, FiGrid, FiFile, FiMail, FiGift, FiPackage, FiLock, FiBox, FiMessageSquare
+    FiCreditCard, FiScissors, FiFileText, FiGrid, FiFile, FiMail, FiGift, FiPackage, FiLock, FiBox, FiMessageSquare, FiCheckSquare
 } from 'react-icons/fi';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -13,6 +13,7 @@ import { getActiveTools } from '@/lib/tools';
 const TOOL_LINKS = [
     { key: 'digitalKhata',      href: '/dashboard/accounting',          label: 'ডিজিটাল খাতা',         icon: FiDollarSign },
     { key: 'digitalKhata',      href: '/dashboard/inventory',           label: 'পণ্য ইনভেন্টরি',        icon: FiBox },
+    { key: 'digitalKhata',      href: '/dashboard/payment-requests',    label: 'পেমেন্ট অনুরোধ',        icon: FiCheckSquare },
     { key: 'linksHub',          href: '/dashboard/links',               label: 'লিংক হাব',              icon: FiLink },
     { key: 'imageHub',          href: '/dashboard/image-hub',           label: 'ইমেজ হাব',              icon: FiImage },
     { key: 'nidPrinter',        href: '/dashboard/nid-printer',         label: 'এনআইডি প্রিন্টার',      icon: FiCreditCard },
