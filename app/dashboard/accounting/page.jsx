@@ -452,7 +452,7 @@ export default function DigitalKhataPage() {
                                                 onClick={async () => {
                                                     const name = document.getElementById('shop-name-input').value;
                                                     try {
-                                                        const res = await api.patch('/client/update-me', { shopName: name });
+                                                        await api.patch('/client/update-me', { shopName: name });
                                                         const user = JSON.parse(localStorage.getItem('user') || '{}');
                                                         user.shopName = name;
                                                         localStorage.setItem('user', JSON.stringify(user));
@@ -467,6 +467,52 @@ export default function DigitalKhataPage() {
                                             </button>
                                         </div>
                                         <p className="text-[10px] text-gray-400 font-bold px-1 italic">* এটি আপনার পাঠানো SMS-এর শুরুতে থাকবে। ফাঁকা রাখলে "ShopOSBd" যাবে।</p>
+                                    </div>
+
+                                    {/* Payment Methods */}
+                                    <div className="pt-6 border-t border-gray-50 space-y-4">
+                                        <h5 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4 text-center">পেমেন্ট মেথড সেটিংস</h5>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            {[
+                                                { id: 'bkash', label: 'bKash Number', color: 'text-[#E2136E]', bg: 'bg-[#fce8f1]', key: 'bkashNumber' },
+                                                { id: 'nagad', label: 'Nagad Number', color: 'text-[#F7941D]', bg: 'bg-[#fff3e0]', key: 'nagadNumber' },
+                                                { id: 'rocket', label: 'Rocket Number', color: 'text-[#8C3494]', bg: 'bg-[#f3e5f5]', key: 'rocketNumber' },
+                                            ].map(p => (
+                                                <div key={p.id} className="space-y-2">
+                                                    <label className={`text-[10px] font-black uppercase tracking-widest px-1 ${p.color}`}>{p.label}</label>
+                                                    <input 
+                                                        id={`${p.id}-input`}
+                                                        type="text"
+                                                        defaultValue={JSON.parse(localStorage.getItem('user') || '{}')[p.key] || ''}
+                                                        className={`w-full px-4 py-2.5 rounded-xl border border-transparent ${p.bg} ${p.color} text-sm font-black focus:ring-2 focus:ring-current outline-none transition-all placeholder:${p.color}/50`}
+                                                        placeholder="01XXXXXXXXX"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                        
+                                        <button 
+                                            onClick={async () => {
+                                                const bkash = document.getElementById('bkash-input').value;
+                                                const nagad = document.getElementById('nagad-input').value;
+                                                const rocket = document.getElementById('rocket-input').value;
+                                                try {
+                                                    await api.patch('/client/update-me', { bkashNumber: bkash, nagadNumber: nagad, rocketNumber: rocket });
+                                                    const user = JSON.parse(localStorage.getItem('user') || '{}');
+                                                    user.bkashNumber = bkash;
+                                                    user.nagadNumber = nagad;
+                                                    user.rocketNumber = rocket;
+                                                    localStorage.setItem('user', JSON.stringify(user));
+                                                    Swal.fire({ icon: 'success', title: 'পেমেন্ট মেথড সংরক্ষিত', showConfirmButton: false, timer: 1500 });
+                                                } catch (e) {
+                                                    Swal.fire('ত্রুটি', 'সেভ করা সম্ভব হয়নি', 'error');
+                                                }
+                                            }}
+                                            className="w-full bg-gray-800 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all active:scale-95 shadow-lg shadow-gray-200"
+                                        >
+                                            পেমেন্ট সেটিংস সেভ করুন
+                                        </button>
                                     </div>
                                 </div>
                             </div>
