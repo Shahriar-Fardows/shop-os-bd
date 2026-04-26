@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, Suspense, use } from 'react';
-import { FiPhone, FiClock, FiAlertCircle, FiCopy, FiX, FiCheckCircle, FiSend, FiArrowLeft, FiPackage } from 'react-icons/fi';
+import { FiPhone, FiClock, FiAlertCircle, FiCopy, FiX, FiCheckCircle, FiSend, FiArrowLeft, FiChevronRight } from 'react-icons/fi';
 
 const BRAND = {
     bkash:  { primary: '#E2136E', name: 'bKash',  dial: '*247#' },
@@ -8,8 +8,8 @@ const BRAND = {
     rocket: { primary: '#8C3494', name: 'Rocket', dial: '*322#' },
 };
 
-const TkBadge = ({ amount, color = 'text-gray-800' }) => (
-    <span className={`font-bold ${color} text-sm flex items-baseline gap-1`}>
+const TkBadge = ({ amount, color = 'text-gray-800', size = 'text-sm' }) => (
+    <span className={`font-bold ${color} ${size} flex items-baseline gap-1 justify-center`}>
         <span className="opacity-70 text-[10px]">Tk</span>
         {amount?.toLocaleString('en-BD')}
     </span>
@@ -23,11 +23,10 @@ function InvoiceContent({ params }) {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [showPay, setShowPay] = useState(false);
-    const [showSubmit, setShowSubmit] = useState(false);
+    const [view, setView] = useState('invoice'); // 'invoice' or 'payment'
     const [method, setMethod] = useState('bkash');
     const [copied, setCopied] = useState(false);
-    const [form, setForm] = useState({ transactionId: '', mobile: '', amount: '', note: '' });
+    const [form, setForm] = useState({ transactionId: '', amount: '' });
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
 
@@ -59,7 +58,6 @@ function InvoiceContent({ params }) {
                 body: JSON.stringify({
                     clientId,
                     customerName: data.customer,
-                    customerMobile: form.mobile,
                     transactionId: form.transactionId,
                     amount: Number(form.amount),
                     method
@@ -68,8 +66,7 @@ function InvoiceContent({ params }) {
             const result = await res.json();
             if (!result.success) throw new Error(result.message);
             setSubmitted(true);
-            setShowPay(false);
-            setShowSubmit(false);
+            setView('invoice');
         } catch (err) {
             alert(err.message || 'জমা দিতে সমস্যা হয়েছে।');
         } finally {
@@ -99,6 +96,91 @@ function InvoiceContent({ params }) {
     const fmt = d => new Date(d).toLocaleDateString('bn-BD', { day: '2-digit', month: 'short', year: 'numeric' });
     const hasAnyMethod = data.shop.bkash || data.shop.nagad || data.shop.rocket;
 
+    if (view === 'payment') {
+        return (
+            <div className="min-h-screen bg-white font-nunito pb-10">
+                <div className="bg-[#1e6bd6] text-white p-4">
+                    <div className="max-w-xl mx-auto flex items-center gap-4">
+                        <button onClick={() => setView('invoice')} className="p-2 -ml-2"><FiArrowLeft size={20}/></button>
+                        <h1 className="font-bold">বকেয়া পরিশোধ ({brand.name})</h1>
+                    </div>
+                </div>
+
+                <div className="max-w-xl mx-auto px-4 mt-6">
+                    <div className="flex border-b border-gray-100 mb-6">
+                        {Object.entries(BRAND).filter(([id]) => data.shop[id]).map(([id, b]) => (
+                            <button
+                                key={id}
+                                onClick={() => setMethod(id)}
+                                className={`flex-1 py-3 text-center border-b-2 transition-all font-bold text-xs ${method === id ? 'border-[#1e6bd6] bg-blue-50 text-[#1e6bd6]' : 'border-transparent text-gray-400'}`}
+                            >
+                                {b.name}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="space-y-6">
+                        {/* Instructions */}
+                        <div className="bg-gray-50 p-6 rounded-lg border border-gray-100 space-y-4">
+                            <h3 className="font-bold text-gray-800 text-sm mb-4">পেমেন্ট করার নিয়মাবলী:</h3>
+                            <div className="space-y-3">
+                                <p className="text-xs text-gray-600 leading-relaxed font-bold">১. {brand.dial} ডায়াল করুন অথবা {brand.name} অ্যাপে যান।</p>
+                                <p className="text-xs text-gray-600 leading-relaxed font-bold">২. "Send Money" অপশনে ক্লিক করুন।</p>
+                                <div className="p-3 bg-white border border-gray-200 rounded-lg flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[9px] text-gray-400 uppercase font-bold">প্রাপক নম্বর</p>
+                                        <p className="text-lg font-bold tracking-widest text-[#1e6bd6]">{number}</p>
+                                    </div>
+                                    <button onClick={() => copyNumber(number)} className="bg-blue-50 text-[#1e6bd6] px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase flex items-center gap-1">
+                                        <FiCopy/> {copied ? 'Copied' : 'Copy'}
+                                    </button>
+                                </div>
+                                <p className="text-xs text-gray-600 leading-relaxed font-bold">৩. টাকার পরিমাণ হিসেবে নিচের টাকাটি লিখুন:</p>
+                                <div className="p-3 bg-white border border-gray-200 rounded-lg">
+                                    <p className="text-[9px] text-gray-400 uppercase font-bold">টাকার পরিমাণ</p>
+                                    <p className="text-lg font-bold text-red-500">Tk {data.totalDue?.toLocaleString('en-BD')}</p>
+                                </div>
+                                <p className="text-xs text-gray-600 leading-relaxed font-bold">৪. নিশ্চিত করতে এখন আপনার {brand.name} মোবাইল মেনু পিন লিখুন।</p>
+                                <p className="text-xs text-gray-600 leading-relaxed font-bold">৫. সবকিছু ঠিক থাকলে, আপনি একটি নিশ্চিতকরণ বার্তা পাবেন।</p>
+                                <p className="text-xs text-gray-600 leading-relaxed font-bold">৬. এখন নিচের বক্সে আপনার Transaction ID দিন এবং VERIFY বাটনে ক্লিক করুন।</p>
+                            </div>
+                        </div>
+
+                        {/* Verification Form */}
+                        <form onSubmit={handleSubmitPayment} className="space-y-4 bg-white p-1">
+                            <div className="grid grid-cols-1 gap-4">
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block px-1">Transaction ID *</label>
+                                    <input
+                                        required type="text" placeholder="Transaction ID লিখুন"
+                                        value={form.transactionId}
+                                        onChange={e => setForm(f => ({ ...f, transactionId: e.target.value }))}
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-base font-bold focus:border-[#1e6bd6] outline-none transition-all uppercase"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block px-1">টাকার পরিমাণ *</label>
+                                    <input
+                                        required type="number" placeholder="কত টাকা পাঠিয়েছেন?"
+                                        value={form.amount}
+                                        onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-base font-bold outline-none"
+                                    />
+                                </div>
+                            </div>
+                            <button
+                                type="submit" disabled={submitting}
+                                className="w-full py-4 text-white rounded-lg font-bold text-sm uppercase tracking-widest bg-[#1e6bd6] flex items-center justify-center gap-2"
+                            >
+                                {submitting ? 'ভেরিফাই হচ্ছে...' : <><FiSend/> VERIFY</>}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-white font-nunito pb-10">
             {/* Header */}
@@ -117,7 +199,6 @@ function InvoiceContent({ params }) {
             </div>
 
             <div className="max-w-xl mx-auto px-4 mt-4 space-y-4">
-                {/* Dues Summary */}
                 <div className="border border-gray-200 p-6 rounded-lg">
                     <div className="text-center mb-6">
                         <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">মোট বকেয়া পরিমাণ</p>
@@ -127,114 +208,36 @@ function InvoiceContent({ params }) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100 mb-6">
+                    <div className="grid grid-cols-2 gap-4 pt-6 border-t border-gray-100 mb-6">
                         <div className="text-center">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase">মোট বিল</p>
-                            <TkBadge amount={totalBill} color="text-gray-800" />
+                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">মোট বিল</p>
+                            <TkBadge amount={totalBill} color="text-gray-800" size="text-lg" />
                         </div>
                         <div className="text-center border-l border-gray-100">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase">মোট জমা</p>
-                            <TkBadge amount={totalPaid} color="text-emerald-600" />
+                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">মোট জমা</p>
+                            <TkBadge amount={totalPaid} color="text-emerald-600" size="text-lg" />
                         </div>
                     </div>
 
                     {submitted ? (
-                        <div className="bg-emerald-50 text-emerald-600 p-3 rounded-lg font-bold text-center border border-emerald-100 text-sm">
-                            পেমেন্ট যাচাই করা হচ্ছে...
+                        <div className="bg-emerald-50 text-emerald-600 p-3 rounded-lg font-bold text-center border border-emerald-100 text-sm flex items-center justify-center gap-2">
+                            <FiCheckCircle/> পেমেন্ট যাচাই করা হচ্ছে...
                         </div>
-                    ) : !showPay && !showSubmit && (
+                    ) : (
                         <button
                             onClick={() => {
-                                if (hasAnyMethod) setShowPay(true);
-                                else alert("দোকানদার নম্বর সেট করেননি।");
+                                if (hasAnyMethod) {
+                                    setForm(f => ({ ...f, amount: String(data.totalDue) }));
+                                    setView('payment');
+                                } else alert("দোকানদার নম্বর সেট করেননি।");
                             }}
-                            className="w-full bg-[#1e6bd6] text-white py-3 rounded-lg font-bold text-sm uppercase"
+                            className="w-full bg-[#1e6bd6] text-white py-3 rounded-lg font-bold text-sm uppercase flex items-center justify-center gap-2"
                         >
-                            বকেয়া পরিশোধ করুন
+                            বকেয়া পরিশোধ করুন <FiChevronRight/>
                         </button>
                     )}
                 </div>
 
-                {/* IN-PAGE PAYMENT FLOW (No Popup) */}
-                {showPay && !submitted && (
-                    <div className="border-2 border-[#1e6bd6] rounded-lg overflow-hidden">
-                        <div className="bg-gray-50 p-3 border-b border-gray-200 flex justify-between items-center">
-                            <span className="text-[10px] font-bold uppercase text-gray-400">মাধ্যম নির্বাচন করুন</span>
-                            <button onClick={() => setShowPay(false)}><FiX/></button>
-                        </div>
-                        <div className="flex">
-                            {Object.entries(BRAND).filter(([id]) => data.shop[id]).map(([id, b]) => (
-                                <button
-                                    key={id}
-                                    onClick={() => setMethod(id)}
-                                    className={`flex-1 py-3 text-center border-b-2 transition-all font-bold text-xs ${method === id ? 'border-[#1e6bd6] bg-blue-50 text-[#1e6bd6]' : 'border-transparent text-gray-400'}`}
-                                >
-                                    {b.name}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="p-4 bg-gray-50">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">নিচের নম্বরে সেন্ড মানি করুন:</p>
-                            <div className="flex items-center justify-between bg-white border border-gray-200 p-3 rounded-lg">
-                                <span className="text-lg font-bold tracking-widest">{number}</span>
-                                <button onClick={() => copyNumber(number)} className="bg-gray-100 px-3 py-1.5 rounded text-[10px] font-bold uppercase">
-                                    {copied ? 'কপি হয়েছে' : 'কপি করুন'}
-                                </button>
-                            </div>
-                        </div>
-                        <div className="p-4 space-y-3">
-                            <p className="text-xs text-gray-600">১. {brand.name} থেকে {number} নম্বরে {data.totalDue} টাকা সেন্ড মানি করুন।</p>
-                            <button 
-                                onClick={() => { setShowPay(false); setShowSubmit(true); setForm(f => ({ ...f, amount: String(data.totalDue) })); }} 
-                                className="w-full py-3 text-white rounded-lg font-bold text-sm"
-                                style={{ background: brand.primary }}
-                            >
-                                ট্র্যানজেকশন আইডি জমা দিন
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {showSubmit && !submitted && (
-                    <form onSubmit={handleSubmitPayment} className="border-2 border-[#1e6bd6] rounded-lg p-4 space-y-4">
-                        <div className="flex justify-between items-center mb-2">
-                            <button type="button" onClick={() => { setShowSubmit(false); setShowPay(true); }} className="text-xs font-bold text-gray-400 uppercase tracking-widest">← ব্যাক</button>
-                            <span className="text-xs font-bold text-[#1e6bd6] uppercase tracking-widest">ভেরিফিকেশন</span>
-                        </div>
-                        <div>
-                            <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">ট্র্যানজেকশন আইডি *</label>
-                            <input
-                                required type="text" placeholder="যেমন: BK1029384"
-                                value={form.transactionId}
-                                onChange={e => setForm(f => ({ ...f, transactionId: e.target.value }))}
-                                className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-sm font-bold focus:border-[#1e6bd6] outline-none transition-all uppercase"
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <input
-                                type="tel" placeholder="মোবাইল নম্বর"
-                                value={form.mobile}
-                                onChange={e => setForm(f => ({ ...f, mobile: e.target.value }))}
-                                className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-sm font-bold"
-                            />
-                            <input
-                                type="number" placeholder="পরিমাণ"
-                                value={form.amount}
-                                onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-                                className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 text-sm font-bold"
-                            />
-                        </div>
-                        <button
-                            type="submit" disabled={submitting}
-                            className="w-full py-3 text-white rounded-lg font-bold text-sm"
-                            style={{ background: brand.primary }}
-                        >
-                            {submitting ? 'প্রসেসিং...' : 'জমা দিন'}
-                        </button>
-                    </form>
-                )}
-
-                {/* Transaction History */}
                 <div className="pt-4">
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 px-1">লেনদেন ইতিহাস</h4>
                     <div className="space-y-2">
@@ -254,7 +257,6 @@ function InvoiceContent({ params }) {
                     </div>
                 </div>
 
-                {/* Footer */}
                 <div className="py-8 border-t border-gray-50 text-center opacity-20">
                     <p className="text-[10px] font-bold text-gray-800 uppercase tracking-[0.4em]">ShopOS BD</p>
                 </div>
