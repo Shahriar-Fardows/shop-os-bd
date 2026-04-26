@@ -2,10 +2,11 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
+
 function InvoiceContent() {
-    const params    = useSearchParams();
-    const clientId  = params.get('c');
-    const customer  = params.get('n');
+    const params   = useSearchParams();
+    const clientId = params.get('c');
+    const customer = params.get('n');
 
     const [data,    setData]    = useState(null);
     const [loading, setLoading] = useState(true);
@@ -24,119 +25,203 @@ function InvoiceContent() {
             .finally(() => setLoading(false));
     }, [clientId, customer]);
 
-    const fmt = d => d ? new Date(d).toLocaleDateString('bn-BD', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
+    const fmt = d => d
+        ? new Date(d).toLocaleDateString('bn-BD', { day: '2-digit', month: 'long', year: 'numeric' })
+        : '—';
 
     if (loading) return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="animate-spin w-10 h-10 border-4 border-[#1e6bd6] border-t-transparent rounded-full" />
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+            <div style={{ width: 40, height: 40, border: '4px solid #1e6bd6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
         </div>
     );
 
     if (error) return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-            <div className="text-center">
-                <div className="text-5xl mb-4">⚠️</div>
-                <p className="text-lg font-bold text-gray-600">{error}</p>
-                <p className="text-sm text-gray-400 mt-2">লিংকটি সঠিক কিনা নিশ্চিত করুন।</p>
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: 24 }}>
+            <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 56, marginBottom: 12 }}>⚠️</div>
+                <p style={{ fontSize: 16, fontWeight: 700, color: '#4b5563' }}>{error}</p>
+                <p style={{ fontSize: 12, color: '#9ca3af', marginTop: 8 }}>লিংকটি সঠিক কিনা নিশ্চিত করুন।</p>
             </div>
         </div>
     );
 
+    const count = data.transactions.length;
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 py-8 px-4">
-            <div className="max-w-lg mx-auto font-nunito">
+        <>
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
+                * { box-sizing: border-box; margin: 0; padding: 0; }
+                body { font-family: 'Hind Siliguri', sans-serif; background: #f0f4ff; }
+                @keyframes spin { to { transform: rotate(360deg); } }
+                @keyframes fadeUp { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+                .card { animation: fadeUp 0.35s ease both; }
+            `}</style>
 
-                {/* Header */}
-                <div className="bg-[#1e6bd6] rounded-2xl p-6 text-white mb-4 shadow-lg shadow-blue-100">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center font-black text-xl">
-                            {data.shop.name?.[0]?.toUpperCase()}
+            <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #e8f0ff 0%, #f0f4ff 60%, #fafafa 100%)', padding: '28px 16px 48px' }}>
+                <div style={{ maxWidth: 460, margin: '0 auto' }}>
+
+                    {/* ── Shop Header ── */}
+                    <div className="card" style={{
+                        background: 'linear-gradient(135deg, #1e6bd6 0%, #1350a8 100%)',
+                        borderRadius: 20, padding: '20px 22px',
+                        color: '#fff', marginBottom: 14,
+                        boxShadow: '0 8px 32px #1e6bd630',
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+                            <div style={{
+                                width: 50, height: 50, borderRadius: 14,
+                                background: 'rgba(255,255,255,0.18)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: 22, fontWeight: 900,
+                            }}>
+                                {data.shop.name?.[0]?.toUpperCase()}
+                            </div>
+                            <div>
+                                <p style={{ fontSize: 10, fontWeight: 700, opacity: 0.7, letterSpacing: '0.1em', textTransform: 'uppercase' }}>দোকান</p>
+                                <h1 style={{ fontSize: 18, fontWeight: 800, lineHeight: 1.2 }}>{data.shop.name}</h1>
+                                {data.shop.phone && <p style={{ fontSize: 13, opacity: 0.8, marginTop: 2 }}>{data.shop.phone}</p>}
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-[10px] font-bold opacity-70 uppercase tracking-widest">দোকান</p>
-                            <h1 className="text-lg font-black">{data.shop.name}</h1>
-                            {data.shop.phone && <p className="text-sm opacity-80 font-medium">{data.shop.phone}</p>}
+                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: 14 }}>
+                            <p style={{ fontSize: 10, fontWeight: 700, opacity: 0.7, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 }}>গ্রাহক</p>
+                            <p style={{ fontSize: 20, fontWeight: 800 }}>{data.customer}</p>
                         </div>
                     </div>
-                    <div className="border-t border-white/20 pt-4">
-                        <p className="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-1">গ্রাহক</p>
-                        <p className="text-xl font-black">{data.customer}</p>
+
+                    {/* ── Total Due ── */}
+                    <div className="card" style={{
+                        background: '#fff', borderRadius: 18,
+                        border: '1.5px solid #fee2e2',
+                        boxShadow: '0 2px 16px #ef44441a',
+                        padding: '20px 22px', marginBottom: 14,
+                        textAlign: 'center',
+                        animationDelay: '0.06s',
+                    }}>
+                        <p style={{ fontSize: 10, fontWeight: 800, color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 6 }}>মোট বাকি পরিমাণ</p>
+                        <p style={{ fontSize: 42, fontWeight: 900, color: '#ef4444', lineHeight: 1 }}>৳{data.totalDue?.toLocaleString('bn-BD')}</p>
+                        <p style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600, marginTop: 8 }}>অনুগ্রহ করে এই পরিমাণ পরিশোধ করুন</p>
                     </div>
-                </div>
 
-                {/* Due Amount */}
-                <div className="bg-white rounded-2xl border border-red-100 shadow-sm p-5 mb-4 text-center">
-                    <p className="text-[10px] font-extrabold text-red-400 uppercase tracking-widest mb-1">মোট বাকি পরিমাণ</p>
-                    <p className="text-4xl font-black text-red-500">৳{data.totalDue?.toLocaleString()}</p>
-                    <p className="text-xs text-gray-400 font-medium mt-2">অনুগ্রহ করে এই পরিমাণ পরিশোধ করুন</p>
-                </div>
+                    {/* ── Transactions ── */}
+                    {count > 0 && (
+                        <div className="card" style={{
+                            background: '#fff', borderRadius: 18,
+                            border: '1px solid #e5e7eb',
+                            boxShadow: '0 2px 12px #0000000d',
+                            overflow: 'hidden', marginBottom: 14,
+                            animationDelay: '0.12s',
+                        }}>
+                            {/* List header */}
+                            <div style={{
+                                padding: '12px 18px',
+                                background: '#f8fafc',
+                                borderBottom: '1px solid #e5e7eb',
+                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            }}>
+                                <p style={{ fontSize: 11, fontWeight: 800, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                    লেনদেন ইতিহাস
+                                </p>
+                                <span style={{
+                                    background: '#1e6bd615', color: '#1e6bd6',
+                                    borderRadius: 99, padding: '2px 10px',
+                                    fontSize: 11, fontWeight: 800,
+                                }}>
+                                    {count}টি রেকর্ড
+                                </span>
+                            </div>
 
-                {/* Transactions */}
-                {data.transactions.length > 0 && (
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
-                        <div className="p-4 border-b border-gray-50 bg-gray-50/50">
-                            <p className="text-xs font-extrabold text-gray-700 uppercase tracking-widest">বাকির বিবরণ ({data.transactions.length}টি লেনদেন)</p>
-                        </div>
-                        <div className="divide-y divide-gray-50">
-                            {data.transactions.map((t, i) => (
-                                <div key={i} className="p-4">
-                                    <div className="flex items-start justify-between mb-2">
-                                        <div>
-                                            <p className="font-extrabold text-sm text-gray-800">{t.title}</p>
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{fmt(t.date)}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-sm font-extrabold text-red-500">৳{t.dueAmount?.toLocaleString()}</p>
-                                            <p className="text-[10px] font-bold text-gray-400">বাকি</p>
+                            {/* Transaction rows */}
+                            {data.transactions.map((t, i) => {
+                                const hasItems = t.items?.length > 0;
+                                return (
+                                    <div key={t._id || i} style={{
+                                        padding: '16px 18px',
+                                        borderBottom: i < count - 1 ? '1px solid #f3f4f6' : 'none',
+                                    }}>
+                                        {/* Date */}
+                                        <p style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600, marginBottom: 10 }}>
+                                            📅 {fmt(t.date)}
+                                        </p>
+
+                                        {/* Items list */}
+                                        {hasItems && (
+                                            <div style={{ marginBottom: 10 }}>
+                                                {t.items.map((item, j) => (
+                                                    <div key={j} style={{
+                                                        display: 'flex', justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        padding: '6px 0',
+                                                        borderBottom: j < t.items.length - 1 ? '1px dashed #f3f4f6' : 'none',
+                                                    }}>
+                                                        <span style={{ fontSize: 14, color: '#1f2937', fontWeight: 700 }}>
+                                                            {item.name}
+                                                        </span>
+                                                        <span style={{ fontSize: 14, fontWeight: 800, color: '#1f2937' }}>
+                                                            ৳{item.price?.toLocaleString('bn-BD')}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* Total bill */}
+                                        <div style={{
+                                            display: 'flex', justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            background: '#f8fafc',
+                                            borderRadius: 10, padding: '9px 14px',
+                                        }}>
+                                            <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 700 }}>মোট বিল</span>
+                                            <span style={{ fontSize: 15, fontWeight: 900, color: '#1f2937' }}>
+                                                ৳{t.totalBill?.toLocaleString('bn-BD')}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                    {t.items?.length > 0 && (
-                                        <div className="space-y-1 mt-2 pt-2 border-t border-gray-50">
-                                            {t.items.map((item, j) => (
-                                                <div key={j} className="flex justify-between text-xs font-medium text-gray-500">
-                                                    <span>{item.name}</span>
-                                                    <span className="font-bold">৳{item.price?.toLocaleString()}</span>
-                                                </div>
-                                            ))}
-                                            <div className="flex justify-between text-xs font-bold text-gray-600 pt-1 border-t border-gray-100">
-                                                <span>মোট বিল</span>
-                                                <span>৳{t.totalBill?.toLocaleString()}</span>
-                                            </div>
-                                            {t.paidAmount > 0 && (
-                                                <div className="flex justify-between text-xs font-bold text-emerald-600">
-                                                    <span>পরিশোধিত</span>
-                                                    <span>৳{t.paidAmount?.toLocaleString()}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
-                    </div>
-                )}
-
-                {/* Contact to pay */}
-                <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-center">
-                    <p className="text-sm font-extrabold text-[#1e6bd6] mb-1">পরিশোধ করতে যোগাযোগ করুন</p>
-                    {data.shop.phone && (
-                        <a href={`tel:${data.shop.phone}`}
-                            className="inline-flex items-center gap-2 mt-2 px-5 py-2.5 bg-[#1e6bd6] text-white rounded-xl font-extrabold text-sm hover:bg-[#1656ac] transition-all">
-                            📞 {data.shop.phone}
-                        </a>
                     )}
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-3">ShopOS BD দ্বারা পরিচালিত</p>
+
+                    {/* ── Contact ── */}
+                    <div className="card" style={{
+                        background: '#eff6ff',
+                        border: '1px solid #bfdbfe',
+                        borderRadius: 18, padding: '18px 22px',
+                        textAlign: 'center',
+                        animationDelay: '0.18s',
+                    }}>
+                        <p style={{ fontSize: 14, fontWeight: 800, color: '#1e6bd6', marginBottom: 8 }}>
+                            পরিশোধ করতে যোগাযোগ করুন
+                        </p>
+                        {data.shop.phone && (
+                            <a href={`tel:${data.shop.phone}`} style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 8,
+                                background: '#1e6bd6', color: '#fff',
+                                borderRadius: 12, padding: '10px 22px',
+                                fontWeight: 800, fontSize: 14,
+                                textDecoration: 'none',
+                            }}>
+                                📞 {data.shop.phone}
+                            </a>
+                        )}
+                        <p style={{ fontSize: 10, color: '#93c5fd', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 14 }}>
+                            ShopOS BD দ্বারা পরিচালিত
+                        </p>
+                    </div>
+
                 </div>
             </div>
-        </div>
+        </>
     );
 }
 
 export default function InvoicePage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="animate-spin w-10 h-10 border-4 border-[#1e6bd6] border-t-transparent rounded-full" />
+            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+                <div style={{ width: 40, height: 40, border: '4px solid #1e6bd6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
             </div>
         }>
             <InvoiceContent />
