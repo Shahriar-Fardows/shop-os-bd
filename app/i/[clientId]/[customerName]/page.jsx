@@ -226,16 +226,16 @@ function InvoiceContent({ params }) {
                             <div key={i} className="bg-white rounded-[28px] p-5 border border-white shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex-1">
-                                        <h5 className="font-black text-slate-800 text-lg leading-tight mb-1">{t.title}</h5>
-                                        <div className="flex flex-wrap gap-1">
+                                        <h5 className="font-black text-slate-800 text-xl leading-tight mb-1">{t.title}</h5>
+                                        <div className="flex flex-wrap gap-1 mt-2">
                                             {t.items?.map((item, idx) => (
-                                                <span key={idx} className="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-bold uppercase">{item.name}</span>
+                                                <span key={idx} className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-bold uppercase">{item.name}</span>
                                             ))}
                                         </div>
                                     </div>
                                     <div className="text-right">
                                         <TkBadge amount={t.totalBill} size="lg" color="text-slate-900" />
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Bill Amount</p>
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Bill Amount</p>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-50">
