@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, Suspense, use } from 'react';
-import { FiPhone, FiClock, FiFileText, FiCheckCircle, FiAlertCircle, FiArrowRight, FiInfo } from 'react-icons/fi';
+import { FiPhone, FiClock, FiCheckCircle, FiAlertCircle, FiArrowRight, FiInfo } from 'react-icons/fi';
 
 function InvoiceContent({ params }) {
     const { clientId, customerName } = use(params);
@@ -135,16 +135,10 @@ function InvoiceContent({ params }) {
                         {data.transactions.map((t, i) => (
                             <div key={i} className="group bg-white rounded-3xl p-5 border border-white hover:border-blue-100 transition-all shadow-sm hover:shadow-md">
                                 <div className="flex items-start justify-between gap-4">
-                                    <div className="flex items-start gap-4">
-                                        <div className="w-12 h-12 bg-blue-50 text-[#1e6bd6] rounded-2xl flex items-center justify-center shrink-0 border border-blue-100">
-                                            <FiFileText size={20} />
-                                        </div>
-                                        <div>
-                                            <h5 className="font-black text-gray-800 leading-tight mb-1">{t.title}</h5>
-                                            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400">
-                                                <FiClock size={12} />
-                                                <span>{fmt(t.date)}</span>
-                                            </div>
+                                    <div className="flex flex-col">
+                                        <h5 className="font-black text-gray-800 leading-tight mb-1">{t.title}</h5>
+                                        <div className="text-[10px] font-bold text-gray-400">
+                                            <span>{fmt(t.date)}</span>
                                         </div>
                                     </div>
                                     <div className="text-right">
@@ -153,25 +147,10 @@ function InvoiceContent({ params }) {
                                     </div>
                                 </div>
 
-                                {t.items?.length > 0 && (
-                                    <div className="mt-4 pt-4 border-t border-gray-50 space-y-2">
-                                        {t.items.map((item, j) => (
-                                            <div key={j} className="flex justify-between items-center text-xs">
-                                                <span className="font-bold text-gray-500 flex items-center gap-2">
-                                                    <div className="w-1 h-1 bg-gray-300 rounded-full" />
-                                                    {item.name}
-                                                </span>
-                                                <span className="font-black text-gray-700">৳{item.price?.toLocaleString('bn-BD')}</span>
-                                            </div>
-                                        ))}
-                                        <div className="flex justify-between items-center pt-2 mt-2 border-t border-dashed border-gray-100">
-                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">মোট বিল: ৳{t.totalBill?.toLocaleString('bn-BD')}</span>
-                                            {t.paidAmount > 0 && (
-                                                <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-md">জমা: ৳{t.paidAmount?.toLocaleString('bn-BD')}</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
+                                <div className="mt-4 pt-4 border-t border-gray-50 flex justify-between items-center">
+                                    <span className="text-[11px] font-black text-gray-500 uppercase tracking-widest">মোট বিল: ৳{t.totalBill?.toLocaleString('bn-BD')}</span>
+                                    <span className="text-[11px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-md">জমা: ৳{t.paidAmount?.toLocaleString('bn-BD')}</span>
+                                </div>
                             </div>
                         ))}
                     </div>

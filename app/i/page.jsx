@@ -139,43 +139,25 @@ function InvoiceContent() {
                                         padding: '16px 18px',
                                         borderBottom: i < count - 1 ? '1px solid #f3f4f6' : 'none',
                                     }}>
-                                        {/* Date */}
-                                        <p style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600, marginBottom: 10 }}>
-                                            📅 {fmt(t.date)}
-                                        </p>
-
-                                        {/* Items list */}
-                                        {hasItems && (
-                                            <div style={{ marginBottom: 10 }}>
-                                                {t.items.map((item, j) => (
-                                                    <div key={j} style={{
-                                                        display: 'flex', justifyContent: 'space-between',
-                                                        alignItems: 'center',
-                                                        padding: '6px 0',
-                                                        borderBottom: j < t.items.length - 1 ? '1px dashed #f3f4f6' : 'none',
-                                                    }}>
-                                                        <span style={{ fontSize: 14, color: '#1f2937', fontWeight: 700 }}>
-                                                            {item.name}
-                                                        </span>
-                                                        <span style={{ fontSize: 14, fontWeight: 800, color: '#1f2937' }}>
-                                                            ৳{item.price?.toLocaleString('bn-BD')}
-                                                        </span>
-                                                    </div>
-                                                ))}
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 12 }}>
+                                            <div>
+                                                <p style={{ fontSize: 16, fontWeight: 800, color: '#1f2937', marginBottom: 2 }}>{t.title}</p>
+                                                <p style={{ fontSize: 11, color: '#9ca3af', fontWeight: 600 }}>{fmt(t.date)}</p>
                                             </div>
-                                        )}
+                                            <div style={{ textAlign: 'right' }}>
+                                                <p style={{ fontSize: 18, fontWeight: 900, color: '#ef4444', lineHeight: 1 }}>৳{t.dueAmount?.toLocaleString('bn-BD')}</p>
+                                                <p style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', marginTop: 4 }}>বাকি</p>
+                                            </div>
+                                        </div>
 
-                                        {/* Total bill */}
                                         <div style={{
                                             display: 'flex', justifyContent: 'space-between',
                                             alignItems: 'center',
                                             background: '#f8fafc',
                                             borderRadius: 10, padding: '9px 14px',
                                         }}>
-                                            <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 700 }}>মোট বিল</span>
-                                            <span style={{ fontSize: 15, fontWeight: 900, color: '#1f2937' }}>
-                                                ৳{t.totalBill?.toLocaleString('bn-BD')}
-                                            </span>
+                                            <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 700 }}>মোট বিল: ৳{t.totalBill?.toLocaleString('bn-BD')}</span>
+                                            <span style={{ fontSize: 12, fontWeight: 800, color: '#10b981' }}>জমা: ৳{t.paidAmount?.toLocaleString('bn-BD')}</span>
                                         </div>
                                     </div>
                                 );
