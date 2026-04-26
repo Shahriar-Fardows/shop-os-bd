@@ -175,8 +175,7 @@ function InvoiceContent() {
                                             <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 700 }}>মোট বিল</span>
                                             <span style={{ fontSize: 15, fontWeight: 900, color: '#1f2937' }}>
                                                 ৳{t.totalBill?.toLocaleString('bn-BD')}
-                                                </span>
-                                            </div>
+                                            </span>
                                         </div>
                                     </div>
                                 );
