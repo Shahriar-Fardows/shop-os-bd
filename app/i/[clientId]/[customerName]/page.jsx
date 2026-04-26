@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, Suspense, use } from 'react';
-import { FiPhone, FiClock, FiCheckCircle, FiAlertCircle, FiCopy, FiX, FiChevronRight, FiSend } from 'react-icons/fi';
+import { FiPhone, FiClock, FiCheckCircle, FiAlertCircle, FiCopy, FiX, FiChevronRight, FiSend, FiArrowLeft, FiActivity } from 'react-icons/fi';
 
 const BRAND = {
     bkash:  { primary: '#E2136E', light: '#fce8f1', name: 'bKash',  dial: '*247#' },
@@ -20,26 +20,26 @@ function InvoiceContent({ params }) {
     const customer = decodeURIComponent(customerName);
     const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
-    const [data,     setData]     = useState(null);
-    const [loading,  setLoading]  = useState(true);
-    const [error,    setError]    = useState('');
-    const [showPay,  setShowPay]  = useState(false);
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [showPay, setShowPay] = useState(false);
     const [showSubmit, setShowSubmit] = useState(false);
-    const [method,   setMethod]   = useState('bkash');
-    const [copied,   setCopied]   = useState(false);
-    const [form,     setForm]     = useState({ transactionId: '', mobile: '', amount: '', note: '' });
+    const [method, setMethod] = useState('bkash');
+    const [copied, setCopied] = useState(false);
+    const [form, setForm] = useState({ transactionId: '', mobile: '', amount: '', note: '' });
     const [submitting, setSubmitting] = useState(false);
-    const [submitted,  setSubmitted]  = useState(false);
+    const [submitted, setSubmitted] = useState(false);
 
     useEffect(() => {
-        if (!clientId || !customer) { setError('ইনভয়েস লিংক ভুল।'); setLoading(false); return; }
+        if (!clientId || !customer) { setError('লিঙ্কটি সঠিক নয়।'); setLoading(false); return; }
         fetch(`${API}/accounting/public-invoice?clientId=${clientId}&customer=${encodeURIComponent(customer)}`)
             .then(r => r.json())
             .then(res => {
                 if (res.success) setData(res.data);
-                else setError(res.message || 'ডেটা পাওয়া যায়নি।');
+                else setError(res.message || 'ডেটা খুঁজে পাওয়া যায়নি।');
             })
-            .catch(() => setError('সার্ভারের সাথে সংযোগ হয়নি।'))
+            .catch(() => setError('সার্ভার সমস্যার কারণে সংযোগ করা সম্ভব হয়নি।'))
             .finally(() => setLoading(false));
     }, [clientId, customer]);
 
@@ -75,17 +75,20 @@ function InvoiceContent({ params }) {
             setShowPay(false);
             setShowSubmit(false);
         } catch (err) {
-            alert(err.message || 'জমা দিতে সমস্যা হয়েছে।');
+            alert(err.message || 'জমা দিতে সমস্যা হয়েছে।');
         } finally {
             setSubmitting(false);
         }
     };
 
     if (loading) return (
-        <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
-            <div className="flex flex-col items-center gap-4">
-                <div className="animate-spin w-12 h-12 border-4 border-[#1e6bd6] border-t-transparent rounded-full" />
-                <p className="text-sm font-bold text-gray-400 animate-pulse uppercase tracking-widest">লোডিং হচ্ছে...</p>
+        <div className="min-h-screen flex items-center justify-center bg-[#F1F5F9]">
+            <div className="flex flex-col items-center gap-5">
+                <div className="relative w-16 h-16">
+                    <div className="absolute inset-0 border-4 border-blue-100 rounded-full"></div>
+                    <div className="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <p className="text-blue-600 font-bold animate-pulse text-xs tracking-widest uppercase">প্রসেসিং হচ্ছে...</p>
             </div>
         </div>
     );
@@ -93,12 +96,12 @@ function InvoiceContent({ params }) {
     if (error) return (
         <div className="min-h-screen flex items-center justify-center bg-white px-6">
             <div className="text-center max-w-sm">
-                <div className="w-20 h-20 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
-                    <FiAlertCircle size={40} />
+                <div className="w-24 h-24 bg-red-50 text-red-500 rounded-[35%] flex items-center justify-center mx-auto mb-8 animate-bounce shadow-inner">
+                    <FiAlertCircle size={48} />
                 </div>
-                <h2 className="text-2xl font-black text-gray-800 mb-2">{error}</h2>
-                <p className="text-sm text-gray-400 font-medium leading-relaxed">
-                    অনুগ্রহ করে লিংকটি পুনরায় চেক করুন অথবা দোকান মালিকের সাথে যোগাযোগ করুন।
+                <h2 className="text-2xl font-black text-gray-800 mb-3 leading-tight">{error}</h2>
+                <p className="text-sm text-gray-500 font-medium px-4">
+                    অনুগ্রহ করে লিংকটি পুনরায় চেক করুন অথবা দোকান মালিকের সাথে সরাসরি যোগাযোগ করুন।
                 </p>
             </div>
         </div>
@@ -111,280 +114,303 @@ function InvoiceContent({ params }) {
     const hasAnyMethod = data.shop.bkash || data.shop.nagad || data.shop.rocket;
 
     return (
-        <div className={`min-h-screen bg-[#f1f5f9] font-nunito pb-12 transition-all ${(showPay || showSubmit) ? 'overflow-hidden h-screen' : ''}`}>
-            {/* Header */}
-            <div className="bg-[#1e6bd6] text-white pt-10 pb-20 px-6 rounded-b-[40px] shadow-2xl shadow-blue-100 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-400/20 rounded-full -ml-24 -mb-24 blur-2xl" />
+        <div className={`min-h-screen bg-[#F8FAFC] font-nunito pb-10 transition-all ${(showPay || showSubmit) ? 'overflow-hidden h-screen' : ''}`}>
+            
+            {/* --- Premium Header --- */}
+            <div className="bg-gradient-to-br from-[#1E293B] to-[#334155] text-white pt-12 pb-24 px-6 rounded-b-[50px] shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full -mr-40 -mt-40 blur-3xl animate-pulse" />
                 <div className="max-w-xl mx-auto relative z-10">
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center justify-between mb-10">
                         <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 bg-white text-[#1e6bd6] rounded-2xl flex items-center justify-center text-2xl font-black shadow-lg overflow-hidden border border-white/50">
+                            <div className="w-16 h-16 bg-white/10 backdrop-blur-xl p-1 rounded-2xl border border-white/20 shadow-xl">
                                 {data.shop.logo ? (
-                                    <img src={data.shop.logo} alt="Shop Logo" className="w-full h-full object-cover" />
-                                ) : data.shop.name?.[0]?.toUpperCase()}
+                                    <img src={data.shop.logo} alt="Logo" className="w-full h-full object-cover rounded-xl" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-2xl font-black">{data.shop.name?.[0]}</div>
+                                )}
                             </div>
                             <div>
-                                <h1 className="text-xl font-black tracking-tight">{data.shop.name}</h1>
-                                <p className="text-xs font-bold text-blue-100 uppercase tracking-widest opacity-80">ডিজিটাল মেমো</p>
+                                <h1 className="text-xl font-black tracking-tight drop-shadow-sm">{data.shop.name}</h1>
+                                <span className="bg-blue-500/20 text-blue-300 px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-500/30">Digital Invoice</span>
                             </div>
                         </div>
                         {data.shop.phone && (
-                            <a href={`tel:${data.shop.phone}`} className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-all border border-white/20">
-                                <FiPhone size={18} />
+                            <a href={`tel:${data.shop.phone}`} className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center hover:bg-white/20 transition-all border border-white/10 group">
+                                <FiPhone size={20} className="group-hover:scale-110 transition-transform"/>
                             </a>
                         )}
                     </div>
-                    <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/10">
-                        <p className="text-[10px] font-black text-blue-100 uppercase tracking-widest mb-1 opacity-70">স্বাগতম,</p>
-                        <h2 className="text-2xl font-black truncate">{data.customer}</h2>
-                        <div className="flex items-center gap-2 mt-2 text-xs font-bold text-blue-100/80">
-                            <FiClock size={14} />
-                            <span>আপডেট: {new Date().toLocaleDateString('bn-BD')}</span>
+                    
+                    <div className="bg-white/5 backdrop-blur-sm rounded-[32px] p-7 border border-white/10 shadow-inner">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Customer Details</p>
+                        <h2 className="text-3xl font-black truncate bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">{data.customer}</h2>
+                        <div className="flex items-center gap-2 mt-4 text-xs font-bold text-gray-400">
+                            <FiClock size={14} className="text-blue-400" />
+                            <span>Last Updated: {new Date().toLocaleDateString('bn-BD')}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div className="max-w-xl mx-auto px-6 -mt-12 space-y-6 relative z-20">
+            {/* --- Main Dashboard --- */}
+            <div className="max-w-xl mx-auto px-6 -mt-16 space-y-6 relative z-20">
 
-                {/* Summary Card */}
-                <div className="bg-white rounded-[32px] shadow-xl shadow-blue-900/5 p-8 border border-white overflow-hidden relative">
-                    <div className="absolute top-0 right-0 w-40 h-40 bg-red-50 rounded-full -mr-20 -mt-20 opacity-60" />
-                    <div className="text-center relative z-10">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-500 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
-                            <FiAlertCircle size={12} />
-                            পরিশোধযোগ্য
+                {/* --- Payment Summary Card --- */}
+                <div className="bg-white rounded-[40px] shadow-2xl shadow-slate-200 p-8 border border-white overflow-hidden group">
+                    <div className="text-center relative">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-red-50 text-red-500 rounded-full text-[10px] font-black uppercase tracking-[0.15em] mb-6">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                            </span>
+                            Pending Dues
                         </div>
-                        <p className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-3">মোট বকেয়া পরিমাণ</p>
-                        <div className="flex items-baseline justify-center gap-2 mb-6">
-                            <span className="text-2xl font-black text-red-400">Tk</span>
-                            <span className="text-6xl font-black text-red-500 tracking-tighter">{data.totalDue?.toLocaleString('en-BD')}</span>
+                        
+                        <div className="flex flex-col items-center gap-1 mb-8">
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">মোট বকেয়া পরিমাণ</p>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-2xl font-black text-red-400">Tk</span>
+                                <span className="text-6xl font-black text-slate-800 tracking-tighter">{data.totalDue?.toLocaleString('en-BD')}</span>
+                            </div>
                         </div>
 
                         {submitted ? (
-                            <div className="w-full bg-emerald-50 text-emerald-600 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border border-emerald-100">
-                                <FiCheckCircle size={18} /> পেমেন্ট জমা দেওয়া হয়েছে, অনুমোদনের অপেক্ষায়
+                            <div className="w-full bg-emerald-50 text-emerald-600 py-5 rounded-3xl font-black text-sm flex items-center justify-center gap-3 border border-emerald-100 shadow-sm">
+                                <div className="bg-emerald-500 text-white p-1 rounded-full"><FiCheckCircle size={16} /></div>
+                                পেমেন্ট যাচাই করা হচ্ছে...
                             </div>
-                        ) : hasAnyMethod ? (
+                        ) : (
                             <button
-                                onClick={() => setShowPay(true)}
-                                className="w-full bg-[#1e6bd6] text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-100 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                onClick={() => {
+                                    if (hasAnyMethod) {
+                                        setShowPay(true);
+                                    } else {
+                                        alert("দোকানদার এখনও কোনো পেমেন্ট নম্বর (bKash/Nagad/Rocket) সেট করেননি। অনুগ্রহ করে সরাসরি যোগাযোগ করুন।");
+                                    }
+                                }}
+                                className="w-full bg-blue-600 text-white py-5 rounded-[24px] font-black text-sm uppercase tracking-[0.15em] shadow-xl shadow-blue-200 flex items-center justify-center gap-3 hover:bg-blue-700 active:scale-[0.97] transition-all"
                             >
-                                পেমেন্ট করুন <FiChevronRight size={18} />
+                                পেমেন্ট করুন <FiChevronRight size={20} />
                             </button>
-                        ) : null}
+                        )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-dashed border-gray-100">
-                        <div className="text-center">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">মোট বিল</p>
-                            <TkBadge amount={totalBill} color="text-gray-800" />
+                    <div className="grid grid-cols-2 gap-4 mt-10 pt-8 border-t-2 border-dashed border-slate-50">
+                        <div className="bg-slate-50 rounded-3xl p-4 text-center">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">মোট বিল</p>
+                            <TkBadge amount={totalBill} color="text-slate-800" size="lg" />
                         </div>
-                        <div className="text-center border-l border-gray-100">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">মোট জমা</p>
-                            <TkBadge amount={totalPaid} color="text-emerald-500" />
+                        <div className="bg-emerald-50/50 rounded-3xl p-4 text-center">
+                            <p className="text-[10px] font-black text-emerald-600/60 uppercase tracking-widest mb-1">মোট জমা</p>
+                            <TkBadge amount={totalPaid} color="text-emerald-600" size="lg" />
                         </div>
                     </div>
                 </div>
 
-                {/* Transaction History */}
+                {/* --- Recent Activity --- */}
                 <div className="space-y-4">
                     <div className="flex items-center justify-between px-2">
-                        <h4 className="text-sm font-black text-gray-500 uppercase tracking-widest">লেনদেন ইতিহাস</h4>
-                        <span className="text-[10px] font-black bg-blue-50 text-[#1e6bd6] px-3 py-1 rounded-full uppercase tracking-widest">
-                            {data.transactions.length} টি রেকর্ড
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                                <FiActivity size={16} />
+                            </div>
+                            <h4 className="text-sm font-black text-slate-700 uppercase tracking-widest">লেনদেন ইতিহাস</h4>
+                        </div>
+                        <span className="text-[10px] font-black bg-white text-slate-400 px-4 py-2 rounded-2xl shadow-sm border border-slate-100">
+                            {data.transactions.length} Records
                         </span>
                     </div>
-                    <div className="space-y-2">
+
+                    <div className="space-y-3">
                         {data.transactions.map((t, i) => (
-                            <div key={i} className="bg-white rounded-2xl p-4 border border-white shadow-sm hover:shadow-md transition-all">
-                                <div className="flex justify-between items-start mb-2">
-                                    <div className="flex-1 min-w-0">
-                                        <h5 className="font-black text-gray-800 leading-tight truncate">{t.title}</h5>
-                                        {t.items?.length > 0 && (
-                                            <p className="text-[10px] text-gray-400 font-bold uppercase truncate">
-                                                {t.items.map(item => item.name).join(', ')}
-                                            </p>
-                                        )}
+                            <div key={i} className="bg-white rounded-[28px] p-5 border border-white shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex-1">
+                                        <h5 className="font-black text-slate-800 text-lg leading-tight mb-1">{t.title}</h5>
+                                        <div className="flex flex-wrap gap-1">
+                                            {t.items?.map((item, idx) => (
+                                                <span key={idx} className="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-bold uppercase">{item.name}</span>
+                                            ))}
+                                        </div>
                                     </div>
-                                    <div className="text-right ml-4">
-                                        <TkBadge amount={t.totalBill} size="sm" color="text-gray-900" />
-                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">মোট বিল</p>
+                                    <div className="text-right">
+                                        <TkBadge amount={t.totalBill} size="lg" color="text-slate-900" />
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Bill Amount</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center justify-between pt-3 border-t border-gray-50">
-                                    <div className="flex gap-4">
-                                        <div>
-                                            <TkBadge amount={t.paidAmount} size="sm" color="text-emerald-500" />
-                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">জমা</p>
-                                        </div>
-                                        <div>
-                                            <TkBadge amount={t.dueAmount} size="sm" color="text-red-500" />
-                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">বাকি</p>
+                                <div className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-50">
+                                    <div>
+                                        <TkBadge amount={t.paidAmount} size="sm" color="text-emerald-500" />
+                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Paid</p>
+                                    </div>
+                                    <div>
+                                        <TkBadge amount={t.dueAmount} size="sm" color="text-red-500" />
+                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Due</p>
+                                    </div>
+                                    <div className="flex flex-col items-end justify-center">
+                                        <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">
+                                            <FiClock size={10} /> {fmt(t.date)}
                                         </div>
                                     </div>
-                                    <p className="text-[9px] font-bold text-gray-400 flex items-center gap-1 uppercase tracking-widest">
-                                        <FiClock size={10} /> {fmt(t.date)}
-                                    </p>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* Footer */}
-                <div className="flex flex-col items-center gap-3 pt-4">
-                    <div className="flex items-center gap-2">
-                        <img src="/shoposbd.png" alt="Logo" className="w-5 h-5 opacity-40 grayscale" />
-                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-[4px]">ShopOS BD</span>
+                {/* Footer Logo */}
+                <div className="flex flex-col items-center gap-4 py-8">
+                    <div className="h-px w-20 bg-slate-200" />
+                    <div className="flex items-center gap-3 opacity-30">
+                        <img src="/shoposbd.png" alt="Logo" className="w-6 h-6 grayscale" />
+                        <span className="text-[11px] font-black text-slate-800 uppercase tracking-[0.4em]">ShopOS BD</span>
                     </div>
                 </div>
             </div>
 
-            {/* ===== PAYMENT MODAL (Step 1: Choose method & see number) ===== */}
-            {showPay && (
-                <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-md sm:rounded-3xl overflow-hidden shadow-2xl relative animate-in slide-in-from-bottom-10 duration-500">
-                        <button onClick={() => setShowPay(false)} className="absolute top-4 right-4 w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-all z-10">
-                            <FiX size={20} />
-                        </button>
+            {/* --- UI MODALS: ENHANCED & RESPONSIVE --- */}
+            {(showPay || showSubmit) && (
+                <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-md transition-all duration-300">
+                    
+                    {/* Modal Content */}
+                    <div className="bg-white w-full max-w-md sm:rounded-[40px] rounded-t-[40px] overflow-hidden shadow-2xl relative animate-in slide-in-from-bottom-10 duration-500">
+                        
+                        {/* Step 1: Choose Provider */}
+                        {showPay && (
+                            <>
+                                <div className="p-4 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Payment Method</span>
+                                    <button onClick={() => setShowPay(false)} className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:bg-white transition-all"><FiX size={20}/></button>
+                                </div>
+                                <div className="flex bg-white">
+                                    {Object.entries(BRAND).filter(([id]) => data.shop[id]).map(([id, b]) => (
+                                        <button
+                                            key={id}
+                                            onClick={() => setMethod(id)}
+                                            className="flex-1 py-6 flex flex-col items-center gap-2 transition-all relative"
+                                        >
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${method === id ? 'scale-110 shadow-lg' : 'opacity-40 grayscale'}`} style={{ background: b.primary }}>
+                                                <span className="text-white font-black text-xs">{b.name[0]}</span>
+                                            </div>
+                                            <span className={`text-[10px] font-black uppercase tracking-widest ${method === id ? 'text-slate-800' : 'text-slate-400'}`}>{b.name}</span>
+                                            {method === id && <div className="absolute bottom-0 w-8 h-1 rounded-t-full" style={{ background: b.primary }} />}
+                                        </button>
+                                    ))}
+                                </div>
+                                
+                                <div style={{ background: brand.primary }} className="p-8 text-white transition-colors duration-500">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70 mb-2 text-center">Amount to Pay</p>
+                                    <div className="flex items-baseline justify-center gap-2 mb-8">
+                                        <span className="text-2xl font-black opacity-60">Tk</span>
+                                        <span className="text-6xl font-black tracking-tight">{data.totalDue?.toLocaleString('en-BD')}</span>
+                                    </div>
+                                    <div className="bg-black/10 backdrop-blur-md rounded-3xl p-5 border border-white/20">
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Merchant Number</p>
+                                                <span className="text-2xl font-black tracking-widest">{number}</span>
+                                            </div>
+                                            <button onClick={() => copyNumber(number)} className="bg-white text-slate-900 h-12 px-6 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-xl active:scale-90 transition-all">
+                                                {copied ? <FiCheckCircle className="text-emerald-500"/> : <FiCopy />}
+                                                {copied ? 'Copied' : 'Copy'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
 
-                        {/* Tabs */}
-                        <div className="grid border-b border-gray-100" style={{ gridTemplateColumns: `repeat(${Object.entries(BRAND).filter(([id]) => data.shop[id]).length}, 1fr)` }}>
-                            {Object.entries(BRAND).filter(([id]) => data.shop[id]).map(([id, b]) => (
-                                <button
-                                    key={id}
-                                    onClick={() => setMethod(id)}
-                                    className="py-5 text-center font-black text-xs uppercase tracking-widest transition-all border-b-2"
-                                    style={{ borderBottomColor: method === id ? b.primary : 'transparent', color: method === id ? b.primary : '#aaa' }}
-                                >
-                                    {b.name}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Amount + Number */}
-                        <div style={{ background: brand.primary }} className="p-6 text-white text-center">
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-1">মোট বকেয়া</p>
-                            <div className="flex items-baseline justify-center gap-2 mb-5">
-                                <span className="text-2xl font-black opacity-80">Tk</span>
-                                <span className="text-5xl font-black">{data.totalDue?.toLocaleString('en-BD')}</span>
-                            </div>
-                            <div className="bg-white/10 rounded-2xl p-4 border border-white/20">
-                                <p className="text-[11px] font-black uppercase tracking-widest opacity-80 mb-2 text-left">নিচের নম্বরে "Send Money" করুন:</p>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xl font-black tracking-widest">{number}</span>
-                                    <button onClick={() => copyNumber(number)} className="px-3 py-1.5 bg-white text-gray-900 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 active:scale-95 transition-all shadow-lg">
-                                        {copied ? <FiCheckCircle /> : <FiCopy />}
-                                        {copied ? 'Copied' : 'Copy'}
+                                <div className="p-8 space-y-4">
+                                    <div className="space-y-3 max-h-40 overflow-y-auto pr-2">
+                                        {[`Dial ${brand.dial} or use ${brand.name} App`, `Select "Send Money" Option`, `Enter Number: ${number}`, `Enter Amount: ${data.totalDue}`, `Save the Transaction ID`].map((step, idx) => (
+                                            <div key={idx} className="flex gap-4 items-center">
+                                                <span className="w-6 h-6 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center text-[10px] font-black shrink-0">{idx + 1}</span>
+                                                <p className="text-sm font-bold text-slate-600">{step}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <button 
+                                        onClick={() => { setShowPay(false); setShowSubmit(true); setForm(f => ({ ...f, amount: String(data.totalDue) })); }} 
+                                        className="w-full py-5 text-white rounded-3xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-2xl active:scale-95 transition-all"
+                                        style={{ background: brand.primary }}
+                                    >
+                                        Next: Submit Transaction ID <FiChevronRight size={18} />
                                     </button>
                                 </div>
-                            </div>
-                        </div>
+                            </>
+                        )}
 
-                        {/* Instructions */}
-                        <div className="p-5 space-y-3 max-h-[35vh] overflow-y-auto">
-                            {[
-                                `${brand.dial} ডায়াল করুন অথবা ${brand.name} অ্যাপে যান।`,
-                                `"Send Money" অপশন সিলেক্ট করুন।`,
-                                `প্রাপক নম্বর হিসেবে ${number} দিন।`,
-                                `পরিমাণ হিসেবে Tk ${data.totalDue?.toLocaleString('en-BD')} দিন।`,
-                                `পেমেন্ট শেষে Transaction ID সংরক্ষণ করুন এবং নিচে জমা দিন।`,
-                            ].map((step, idx) => (
-                                <div key={idx} className="flex gap-3 items-start">
-                                    <span className="w-5 h-5 rounded-full bg-blue-50 text-[#1e6bd6] flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5 border border-blue-100">{idx + 1}</span>
-                                    <p className="text-sm font-bold text-gray-600 leading-relaxed">{step}</p>
+                        {/* Step 2: Submit Form */}
+                        {showSubmit && (
+                            <form onSubmit={handleSubmitPayment}>
+                                <div style={{ background: brand.primary }} className="p-8 text-white relative">
+                                    <button type="button" onClick={() => { setShowSubmit(false); setShowPay(true); }} className="absolute top-6 left-6 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white"><FiArrowLeft size={20}/></button>
+                                    <div className="text-center">
+                                        <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Verification</p>
+                                        <h3 className="text-2xl font-black">Submit Transaction</h3>
+                                    </div>
                                 </div>
-                            ))}
-                        </div>
-
-                        <div className="p-5 pt-0 flex gap-3">
-                            <button onClick={() => setShowPay(false)} className="flex-1 py-3.5 bg-gray-100 text-gray-700 rounded-2xl font-black text-sm uppercase tracking-widest active:scale-[0.98] transition-all">
-                                বন্ধ করুন
-                            </button>
-                            <button onClick={() => { setShowPay(false); setShowSubmit(true); setForm(f => ({ ...f, amount: String(data.totalDue) })); }} className="flex-1 py-3.5 text-white rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all" style={{ background: brand.primary }}>
-                                <FiSend size={16} /> ID জমা দিন
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ===== SUBMIT TRANSACTION ID MODAL (Step 2) ===== */}
-            {showSubmit && (
-                <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-md sm:rounded-3xl overflow-hidden shadow-2xl relative animate-in slide-in-from-bottom-10 duration-500">
-                        <div style={{ background: brand.primary }} className="p-6 text-white">
-                            <button onClick={() => { setShowSubmit(false); setShowPay(true); }} className="absolute top-4 left-4 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-all">
-                                <span className="text-lg font-black">←</span>
-                            </button>
-                            <button onClick={() => setShowSubmit(false)} className="absolute top-4 right-4 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-all">
-                                <FiX size={18} />
-                            </button>
-                            <div className="text-center mt-2">
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-1">ট্র্যান্সেকশন আইডি দিন</p>
-                                <p className="font-black text-lg opacity-90">{brand.name} পেমেন্ট ভেরিফাই করুন</p>
-                            </div>
-                        </div>
-
-                        <form onSubmit={handleSubmitPayment} className="p-6 space-y-4">
-                            <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5 block">ট্র্যান্সেকশন আইডি *</label>
-                                <input
-                                    required
-                                    type="text"
-                                    placeholder="ট্র্যান্সেকশন আইডি দিন"
-                                    value={form.transactionId}
-                                    onChange={e => setForm(f => ({ ...f, transactionId: e.target.value }))}
-                                    className="w-full px-5 py-3.5 rounded-2xl border-2 border-gray-100 bg-gray-50 text-base font-black focus:border-current outline-none transition-all"
-                                    style={{ '--tw-ring-color': brand.primary }}
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5 block">আপনার মোবাইল নম্বর (01XXXXXXXXX)</label>
-                                <input
-                                    type="text"
-                                    placeholder="01XXXXXXXXX"
-                                    value={form.mobile}
-                                    onChange={e => setForm(f => ({ ...f, mobile: e.target.value }))}
-                                    className="w-full px-5 py-3.5 rounded-2xl border-2 border-gray-100 bg-gray-50 text-base font-bold focus:outline-none transition-all"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5 block">পরিমাণ (Tk)</label>
-                                <input
-                                    type="number"
-                                    placeholder="পরিমাণ"
-                                    value={form.amount}
-                                    onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-                                    className="w-full px-5 py-3.5 rounded-2xl border-2 border-gray-100 bg-gray-50 text-base font-bold focus:outline-none transition-all"
-                                />
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={submitting}
-                                className="w-full py-4 text-white rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl active:scale-[0.98] transition-all disabled:opacity-60"
-                                style={{ background: brand.primary }}
-                            >
-                                {submitting ? (
-                                    <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full inline-block" /> জমা হচ্ছে...</>
-                                ) : (
-                                    <><FiSend size={16} /> VERIFY</>
-                                )}
-                            </button>
-                            <p className="text-center text-[10px] text-gray-400 font-bold">সাবমিট করার পর দোকানদার যাচাই করবে • ১-৬ ঘণ্টার মধ্যে সক্রিয় হবে</p>
-                        </form>
+                                <div className="p-8 space-y-5">
+                                    <div className="space-y-4">
+                                        <div className="group">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Transaction ID *</label>
+                                            <input
+                                                required
+                                                type="text"
+                                                placeholder="Example: BK1029384"
+                                                value={form.transactionId}
+                                                onChange={e => setForm(f => ({ ...f, transactionId: e.target.value }))}
+                                                className="w-full px-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50 text-base font-black focus:border-slate-300 focus:bg-white outline-none transition-all uppercase placeholder:normal-case"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Mobile No</label>
+                                                <input
+                                                    type="tel"
+                                                    placeholder="017..."
+                                                    value={form.mobile}
+                                                    onChange={e => setForm(f => ({ ...f, mobile: e.target.value }))}
+                                                    className="w-full px-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50 text-sm font-bold outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block ml-1">Amount</label>
+                                                <input
+                                                    type="number"
+                                                    value={form.amount}
+                                                    onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+                                                    className="w-full px-6 py-4 rounded-2xl border-2 border-slate-100 bg-slate-50 text-sm font-bold outline-none"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={submitting}
+                                        className="w-full py-5 text-white rounded-[24px] font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all disabled:opacity-50"
+                                        style={{ background: brand.primary }}
+                                    >
+                                        {submitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <FiSend size={18}/>}
+                                        Confirm Payment
+                                    </button>
+                                    <p className="text-center text-[10px] text-slate-400 font-bold leading-relaxed px-4">পেমেন্ট সাবমিট করার ১-৬ ঘণ্টার মধ্যে ম্যানুয়ালি যাচাই করে আপডেট করে দেওয়া হবে।</p>
+                                </div>
+                            </form>
+                        )}
                     </div>
                 </div>
             )}
 
             <style jsx global>{`
                 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
-                body { background-color: #f1f5f9; }
+                body { background-color: #F8FAFC; }
                 .font-nunito { font-family: 'Nunito', sans-serif; }
+                input::-webkit-outer-spin-button,
+                input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+                .animate-in { animation-duration: 0.3s; animation-fill-mode: both; }
+                .fade-in { animation-name: fadeIn; }
+                .slide-in-from-bottom-10 { animation-name: slideInBottom; }
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes slideInBottom { from { transform: translateY(10%); } to { transform: translateY(0); } }
             `}</style>
         </div>
     );
@@ -393,8 +419,8 @@ function InvoiceContent({ params }) {
 export default function InvoicePage({ params }) {
     return (
         <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
-                <div className="animate-spin w-10 h-10 border-4 border-[#1e6bd6] border-t-transparent rounded-full" />
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
             </div>
         }>
             <InvoiceContent params={params} />
