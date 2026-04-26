@@ -223,35 +223,18 @@ function InvoiceContent({ params }) {
 
                     <div className="space-y-3">
                         {data.transactions.map((t, i) => (
-                            <div key={i} className="bg-white rounded-[28px] p-5 border border-white shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="flex-1">
-                                        <h5 className="font-black text-slate-800 text-xl leading-tight mb-1">{t.title}</h5>
-                                        <div className="flex flex-wrap gap-1 mt-2">
-                                            {t.items?.map((item, idx) => (
-                                                <span key={idx} className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-bold uppercase">{item.name}</span>
-                                            ))}
-                                        </div>
+                            <div key={i} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center justify-between gap-4 hover:shadow-md transition-all">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 shrink-0">
+                                        <FiActivity size={18} />
                                     </div>
-                                    <div className="text-right">
-                                        <TkBadge amount={t.totalBill} size="lg" color="text-slate-900" />
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Bill Amount</p>
+                                    <div className="min-w-0">
+                                        <h5 className="font-black text-slate-800 text-lg truncate">{t.title}</h5>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{fmt(t.date)}</p>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-3 gap-2 pt-4 border-t border-slate-50">
-                                    <div>
-                                        <TkBadge amount={t.paidAmount} size="sm" color="text-emerald-500" />
-                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Paid</p>
-                                    </div>
-                                    <div>
-                                        <TkBadge amount={t.dueAmount} size="sm" color="text-red-500" />
-                                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Due</p>
-                                    </div>
-                                    <div className="flex flex-col items-end justify-center">
-                                        <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">
-                                            <FiClock size={10} /> {fmt(t.date)}
-                                        </div>
-                                    </div>
+                                <div className="text-right shrink-0">
+                                    <TkBadge amount={t.totalBill} size="lg" color="text-slate-900" />
                                 </div>
                             </div>
                         ))}
