@@ -135,7 +135,7 @@ export default function DigitalKhataPage() {
         }
 
         const link = shortCode ? `shoposbd.com/s/${shortCode}` : `shoposbd.com/i/${user.shortId || user._id}/${encodeURIComponent(customer.name)}`;
-        const template = `( ShopOSBd ) আপনার ${customer.dueAmount?.toLocaleString()}৳ বাকি আছে। লিঙ্ক: ${link}`;
+        const template = `(ShopOSBd) আপনার ${customer.dueAmount?.toLocaleString()}Tk বাকি আছে। বিস্তারিত : ${link}`;
 
         const { isConfirmed } = await Swal.fire({
             title: `<span class="font-nunito font-black text-lg text-[#1e6bd6]">SMS পাঠান: ${customer.name}</span>`,
