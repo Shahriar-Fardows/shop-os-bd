@@ -428,12 +428,14 @@ export default function ImageEditPage() {
         const totalH = usedRows * photoH + (usedRows - 1) * gap;
 
         let offsetX, offsetY;
-        if (layoutMode === 'centered') {
-            offsetX = (sheetW - totalW) / 2;
-            offsetY = (sheetH - totalH) / 2;
-        } else {
-            offsetX = margin;
-            offsetY = margin;
+        switch (layoutMode) {
+            case 'top-center':    offsetX = (sheetW - totalW) / 2; offsetY = margin; break;
+            case 'top-right':     offsetX = sheetW - totalW - margin; offsetY = margin; break;
+            case 'centered':      offsetX = (sheetW - totalW) / 2; offsetY = (sheetH - totalH) / 2; break;
+            case 'bottom-left':   offsetX = margin; offsetY = sheetH - totalH - margin; break;
+            case 'bottom-center': offsetX = (sheetW - totalW) / 2; offsetY = sheetH - totalH - margin; break;
+            case 'bottom-right':  offsetX = sheetW - totalW - margin; offsetY = sheetH - totalH - margin; break;
+            default:              offsetX = margin; offsetY = margin; // 'packed' / top-left
         }
 
         for (let i = 0; i < count; i++) {
@@ -685,8 +687,16 @@ export default function ImageEditPage() {
                                 const totalW = sheetLayout.maxCols * pw + (sheetLayout.maxCols - 1) * gap;
                                 const totalH = usedRows * ph + (usedRows - 1) * gap;
                                 const margin = sheetLayout.marginMm * pxPerMm;
-                                const offsetX = layoutMode === 'centered' ? (previewW - totalW) / 2 : margin;
-                                const offsetY = layoutMode === 'centered' ? (previewH - totalH) / 2 : margin;
+                                let offsetX, offsetY;
+                                switch (layoutMode) {
+                                    case 'top-center':    offsetX = (previewW - totalW) / 2; offsetY = margin; break;
+                                    case 'top-right':     offsetX = previewW - totalW - margin; offsetY = margin; break;
+                                    case 'centered':      offsetX = (previewW - totalW) / 2; offsetY = (previewH - totalH) / 2; break;
+                                    case 'bottom-left':   offsetX = margin; offsetY = previewH - totalH - margin; break;
+                                    case 'bottom-center': offsetX = (previewW - totalW) / 2; offsetY = previewH - totalH - margin; break;
+                                    case 'bottom-right':  offsetX = previewW - totalW - margin; offsetY = previewH - totalH - margin; break;
+                                    default:              offsetX = margin; offsetY = margin; // 'packed'
+                                }
                                 return (
                                     <div className="bg-white shadow-inner relative border border-gray-200" style={{ width: previewW, height: previewH }}>
                                         {Array.from({ length: effectiveCount }).map((_, i) => {
@@ -998,19 +1008,24 @@ export default function ImageEditPage() {
                                             </div>
                                             <div className="flex items-center gap-3 flex-wrap">
                                                 <span className="text-[10px] font-bold text-[#1e6bd6] uppercase tracking-widest">Layout</span>
-                                                <div className="flex gap-1">
-                                                    <button
-                                                        onClick={() => setLayoutMode('packed')}
-                                                        className={`px-3 py-1 rounded text-[10px] font-extrabold uppercase tracking-widest transition-all ${layoutMode === 'packed' ? 'bg-[#1e6bd6] text-white' : 'bg-white text-gray-500 border border-gray-200'}`}
-                                                    >
-                                                        Top-Left
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setLayoutMode('centered')}
-                                                        className={`px-3 py-1 rounded text-[10px] font-extrabold uppercase tracking-widest transition-all ${layoutMode === 'centered' ? 'bg-[#1e6bd6] text-white' : 'bg-white text-gray-500 border border-gray-200'}`}
-                                                    >
-                                                        Centered
-                                                    </button>
+                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                                                    {[
+                                                        { id: 'packed', label: 'Top-Left' },
+                                                        { id: 'top-center', label: 'Top-Center' },
+                                                        { id: 'top-right', label: 'Top-Right' },
+                                                        { id: 'centered', label: 'Centered' },
+                                                        { id: 'bottom-left', label: 'Bottom-Left' },
+                                                        { id: 'bottom-center', label: 'Bottom-Center' },
+                                                        { id: 'bottom-right', label: 'Bottom-Right' },
+                                                    ].map((m) => (
+                                                        <button
+                                                            key={m.id}
+                                                            onClick={() => setLayoutMode(m.id)}
+                                                            className={`px-2 py-1.5 rounded text-[9px] font-extrabold uppercase tracking-tight transition-all border ${layoutMode === m.id ? 'bg-[#1e6bd6] text-white border-[#1e6bd6]' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}
+                                                        >
+                                                            {m.label}
+                                                        </button>
+                                                    ))}
                                                 </div>
                                                 <label className="flex items-center gap-2 cursor-pointer ml-auto">
                                                     <input type="checkbox" checked={cutMarks} onChange={(e) => setCutMarks(e.target.checked)} className="accent-[#1e6bd6]" />
