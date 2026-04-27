@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { removeBackground } from '@imgly/background-removal';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -35,6 +35,7 @@ const PHOTO_SIZES = [
     { id: 'visa', label: 'Visa 2"×2"', w: 51, h: 51 },
     { id: 'pp-std', label: 'PP 2"×2.5"', w: 51, h: 64 },
     { id: 'id-card', label: 'ID Card 1"×1.25"', w: 25, h: 32 },
+    { id: 'custom', label: 'Custom Size', w: 35, h: 45 },
 ];
 
 const SHEET_SIZES = [
@@ -77,6 +78,7 @@ export default function ImageEditPage() {
 
     // Photo Sheet
     const [photoSize, setPhotoSize] = useState('passport');
+    const [customPhotoSize, setCustomPhotoSize] = useState({ w: 35, h: 45 });
     const [sheetSize, setSheetSize] = useState('A4');
     const [cutMarks, setCutMarks] = useState(true);
     const [photoCount, setPhotoCount] = useState(0); // 0 = auto-max
@@ -365,8 +367,11 @@ export default function ImageEditPage() {
     };
 
     // ---------------- Photo Sheet ----------------
-    const sheetLayout = (() => {
-        const sz = PHOTO_SIZES.find(s => s.id === photoSize);
+    const sheetLayout = useMemo(() => {
+        let sz = PHOTO_SIZES.find(s => s.id === photoSize);
+        if (photoSize === 'custom') {
+            sz = { ...sz, w: customPhotoSize.w, h: customPhotoSize.h };
+        }
         const sh = SHEET_SIZES.find(s => s.id === sheetSize);
         if (!sz || !sh) return null;
         const marginMm = 5, gapMm = 2;
@@ -374,7 +379,7 @@ export default function ImageEditPage() {
         const maxRows = Math.max(1, Math.floor((sh.h - 2 * marginMm + gapMm) / (sz.h + gapMm)));
         const maxFit = maxCols * maxRows;
         return { sz, sh, maxCols, maxRows, maxFit, marginMm, gapMm };
-    })();
+    }, [photoSize, sheetSize, customPhotoSize.w, customPhotoSize.h]);
 
     const effectiveCount = sheetLayout
         ? (photoCount > 0 ? Math.min(photoCount, sheetLayout.maxFit) : sheetLayout.maxFit)
@@ -384,7 +389,7 @@ export default function ImageEditPage() {
     useEffect(() => {
         if (!sheetLayout) return;
         if (photoCount > sheetLayout.maxFit) setPhotoCount(sheetLayout.maxFit);
-    }, [photoSize, sheetSize]); // eslint-disable-line
+    }, [sheetLayout?.maxFit]); // eslint-disable-line
 
     const generateSheetDataUrl = async () => {
         if (!currentImage || !sheetLayout) return null;
@@ -438,10 +443,10 @@ export default function ImageEditPage() {
             const y = offsetY + r * (photoH + gap);
             ctx.drawImage(img, sx, sy, sw, sh2, x, y, photoW, photoH);
             if (cutMarks) {
-                ctx.strokeStyle = '#9ca3af';
-                ctx.lineWidth = 1;
-                ctx.setLineDash([6, 4]);
-                ctx.strokeRect(x + 0.5, y + 0.5, photoW, photoH);
+                ctx.strokeStyle = '#333333';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([12, 8]);
+                ctx.strokeRect(x, y, photoW, photoH);
                 ctx.setLineDash([]);
             }
         }
@@ -690,7 +695,7 @@ export default function ImageEditPage() {
                                             return (
                                                 <div
                                                     key={i}
-                                                    className={`absolute overflow-hidden ${cutMarks ? 'outline outline-1 outline-dashed outline-gray-400' : ''}`}
+                                                    className={`absolute overflow-hidden ${cutMarks ? 'border border-dashed border-gray-600' : ''}`}
                                                     style={{
                                                         left: offsetX + c * (pw + gap),
                                                         top: offsetY + r * (ph + gap),
@@ -921,6 +926,28 @@ export default function ImageEditPage() {
                                                     </button>
                                                 ))}
                                             </div>
+                                            {photoSize === 'custom' && (
+                                                <div className="flex gap-2 mt-2 bg-blue-50/40 p-2 rounded-lg border border-blue-50">
+                                                    <div className="flex-1">
+                                                        <label className="block text-[9px] font-bold text-[#1e6bd6] uppercase mb-1">Width (mm)</label>
+                                                        <input
+                                                            type="number"
+                                                            value={customPhotoSize.w}
+                                                            onChange={(e) => setCustomPhotoSize(prev => ({ ...prev, w: Number(e.target.value) || 1 }))}
+                                                            className="w-full px-2 py-1.5 rounded border border-blue-100 bg-white text-xs font-bold outline-none focus:border-[#1e6bd6]"
+                                                        />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <label className="block text-[9px] font-bold text-[#1e6bd6] uppercase mb-1">Height (mm)</label>
+                                                        <input
+                                                            type="number"
+                                                            value={customPhotoSize.h}
+                                                            onChange={(e) => setCustomPhotoSize(prev => ({ ...prev, h: Number(e.target.value) || 1 }))}
+                                                            className="w-full px-2 py-1.5 rounded border border-blue-100 bg-white text-xs font-bold outline-none focus:border-[#1e6bd6]"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                         <div>
                                             <span className="text-[10px] font-bold text-[#1e6bd6] uppercase tracking-widest block mb-2">Sheet Size</span>
