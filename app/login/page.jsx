@@ -30,12 +30,23 @@ export default function ClientLogin() {
 
       setTimeout(() => router.push('/dashboard'), 1500);
     } catch (error) {
-      Swal.fire({
-        title: 'Error',
-        text: error.response?.data?.message || 'Login failed',
-        icon: 'error',
-        confirmButtonColor: '#1e6bd6'
-      });
+      const errMsg = error.response?.data?.message || 'Login failed';
+      if (errMsg === 'Account is blocked') {
+        Swal.fire({
+          title: 'Account Block করা হয়েছে',
+          html: 'আপনার account block করা হয়েছে।<br>অনুগ্রহ করে <b>Support</b>-এ যোগাযোগ করুন।',
+          icon: 'error',
+          confirmButtonText: 'ঠিক আছে',
+          confirmButtonColor: '#1e6bd6',
+        });
+      } else {
+        Swal.fire({
+          title: 'Error',
+          text: errMsg,
+          icon: 'error',
+          confirmButtonColor: '#1e6bd6'
+        });
+      }
       setLoading(false);
     }
   };
