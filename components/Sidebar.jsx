@@ -1,7 +1,7 @@
 "use client";
 import {
     FiHome, FiHelpCircle, FiUser, FiLogOut, FiLink, FiDollarSign, FiImage,
-    FiCreditCard, FiScissors, FiFileText, FiGrid, FiFile, FiMail, FiGift, FiPackage, FiLock, FiBox, FiMessageSquare, FiCheckSquare
+    FiCreditCard, FiScissors, FiFileText, FiGrid, FiFile, FiMail, FiGift, FiPackage, FiLock, FiBox, FiMessageSquare, FiCheckSquare, FiUsers
 } from 'react-icons/fi';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -18,6 +18,7 @@ const TOOL_LINKS = [
     { key: 'imageHub',          href: '/dashboard/image-hub',           label: 'ইমেজ হাব',              icon: FiImage },
     { key: 'nidPrinter',        href: '/dashboard/nid-printer',         label: 'এনআইডি প্রিন্টার',      icon: FiCreditCard },
     { key: 'imageEditor',       href: '/dashboard/image-edit',          label: 'ইমেজ এডিটর',            icon: FiScissors },
+    { key: 'jointPhoto',        href: '/dashboard/joint-photo',         label: 'জয়েন্ট পাসপোর্ট ফটো',   icon: FiUsers },
     { key: 'cvMaker',           href: '/dashboard/cv-maker',            label: 'সিভি / বায়োডাটা',       icon: FiFileText },
     { key: 'applicationLetter', href: '/dashboard/application-letter',  label: 'আবেদনপত্র',             icon: FiMail },
     { key: 'cashMemo',          href: '/dashboard/cash-memo',           label: 'ক্যাশ মেমো',            icon: FiFile },
@@ -152,7 +153,7 @@ const Sidebar = ({ handleLogout }) => {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto no-scrollbar px-3 py-4">
+            <div className="flex-1 overflow-y-auto px-3 py-4" style={{ scrollbarWidth: 'thin', scrollbarColor: '#e5e7eb transparent' }}>
                 <nav className="space-y-1">
                     <div className="px-3 mb-2">
                         <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-none">মূল মেনু</span>

@@ -1194,10 +1194,14 @@ export default function ImageEditPage() {
                             {tools.filter(t => t.group === 'edit').map((t) => {
                                 const Icon = t.icon;
                                 const isActive = activeTool === t.id;
+                                const isBgRemove = t.id === 'bg-remove';
                                 return (
                                     <button
                                         key={t.id}
-                                        onClick={() => setActiveTool(t.id)}
+                                        onClick={() => {
+                                            if (isBgRemove) { window.open('https://www.remove.bg/', '_blank'); return; }
+                                            setActiveTool(t.id);
+                                        }}
                                         disabled={isProcessing}
                                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all text-left disabled:opacity-50 ${
                                             isActive
@@ -1207,6 +1211,7 @@ export default function ImageEditPage() {
                                     >
                                         <Icon size={18} className={isActive ? 'text-[#1e6bd6]' : 'text-gray-400'} />
                                         <span>{t.label}</span>
+                                        {isBgRemove && <span className="ml-auto text-[9px] font-black bg-blue-50 text-[#1e6bd6] px-1.5 py-0.5 rounded uppercase tracking-wider border border-blue-100">↗</span>}
                                     </button>
                                 );
                             })}
