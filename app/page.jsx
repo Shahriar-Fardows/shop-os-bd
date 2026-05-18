@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import {
     FiArrowRight, FiFileText, FiFile, FiMail, FiGrid,
@@ -53,7 +54,7 @@ export default function HomePage() {
             <nav className="fixed top-0 left-0 right-0 z-[100] bg-white/80 backdrop-blur-xl border-b border-gray-100 py-4">
                 <div className="container mx-auto flex justify-between items-center px-6">
                     <div className="flex items-center gap-3">
-                        <img src="/shoposbd.png" alt="ShopOS BD" className="w-10 h-10 object-contain hover:rotate-12 transition-transform cursor-pointer" />
+                        <Image src="/shoposbd.png" alt="ShopOS BD" width={40} height={40} className="w-10 h-10 object-contain hover:rotate-12 transition-transform cursor-pointer" />
                         <span className="text-xl font-black text-gray-900 tracking-tighter uppercase">ShopOS<span className="text-blue-600">BD</span></span>
                     </div>
                     <div className="hidden lg:flex items-center gap-10">
@@ -165,7 +166,7 @@ export default function HomePage() {
                                             <f.icon size={28} />
                                         </div>
                                         <div>
-                                            <h4 className="text-xl font-black text-gray-800 mb-2">{f.title}</h4>
+                                            <h3 className="text-xl font-black text-gray-800 mb-2">{f.title}</h3>
                                             <p className="text-gray-500 font-medium leading-relaxed">{f.desc}</p>
                                         </div>
                                     </div>
@@ -177,7 +178,7 @@ export default function HomePage() {
                             <div className="bg-white p-10 rounded-lg shadow-none border border-gray-100 transform rotate-3 hover:rotate-0 transition-transform duration-700">
                                 <div className="space-y-6">
                                     <div className="flex justify-between items-center border-b border-gray-50 pb-4">
-                                        <h5 className="font-black text-gray-800">আজকের ড্যাশবোর্ড</h5>
+                                        <h3 className="font-black text-gray-800">আজকের ড্যাশবোর্ড</h3>
                                         <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">Live</span>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
@@ -281,7 +282,7 @@ export default function HomePage() {
                                         <FiStar className="text-white/20 group-hover:text-amber-400 transition-colors" />
                                     </div>
 
-                                    <h4 className="text-xl font-black mb-4 text-white leading-tight">{link.title}</h4>
+                                    <h3 className="text-xl font-black mb-4 text-white leading-tight">{link.title}</h3>
                                     <p className="text-blue-100/60 font-medium leading-relaxed mb-10 flex-1 line-clamp-2">
                                         {link.description || 'Visit official website for important updates and services.'}
                                     </p>
@@ -437,7 +438,7 @@ export default function HomePage() {
                 <div className="container mx-auto px-6 text-center">
                     <div className="flex flex-col items-center gap-8 mb-24">
                         <div className="flex items-center gap-4">
-                            <img src="/shoposbd.png" alt="Logo" className="w-16 h-16" />
+                            <Image src="/shoposbd.png" alt="ShopOS BD Logo" width={64} height={64} className="w-16 h-16" />
                             <span className="text-3xl font-black text-gray-900 tracking-tighter uppercase">ShopOS<span className="text-blue-600">BD</span></span>
                         </div>
                         <p className="max-w-lg text-gray-400 text-lg font-medium leading-relaxed">
@@ -454,7 +455,7 @@ export default function HomePage() {
                         <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-12">
                             <div className="flex flex-col gap-6">
                                 <div className="flex items-center gap-3">
-                                    <img src="/shoposbd.png" alt="ShopOS BD" className="w-10 h-10 object-contain" />
+                                    <Image src="/shoposbd.png" alt="ShopOS BD Logo" width={40} height={40} className="w-10 h-10 object-contain" />
                                     <span className="text-xl font-black text-gray-900 tracking-tighter uppercase">ShopOS<span className="text-blue-600">BD</span></span>
                                 </div>
                                 <p className="text-gray-400 text-sm font-medium max-w-xs leading-relaxed">
