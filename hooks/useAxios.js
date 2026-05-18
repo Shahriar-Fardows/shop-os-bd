@@ -29,12 +29,18 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        window.location.href = "/login";
-      }
+    // Only force-logout on 401 (token missing / expired / invalid).
+    // 403 means the user IS authenticated but lacks permission for a specific
+    // action — logging them out would be wrong (e.g. a role check failure on
+    // one endpoint should not kill the whole session).
+    // Requests can also opt-out by passing { _skipLogout: true } in their config.
+    const is401 = error.response?.status === 401;
+    const skipLogout = error.config?._skipLogout;
+
+    if (is401 && !skipLogout && typeof window !== "undefined") {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/login";
     }
     return Promise.reject(error);
   }

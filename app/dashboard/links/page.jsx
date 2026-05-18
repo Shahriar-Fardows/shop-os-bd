@@ -21,7 +21,10 @@ export default function AllLinksPage() {
 
     const fetchUser = async () => {
         try {
-            const res = await api.get('/client-auth/me');
+            // _skipLogout: true — a failure here (e.g. network blip) must NOT
+            // wipe the token.  The session is still valid; only the profile
+            // enrichment is optional for this page.
+            const res = await api.get('/client-auth/me', { _skipLogout: true });
             if (res.data?.data) setUser(res.data.data);
         } catch {}
     };
@@ -62,10 +65,25 @@ export default function AllLinksPage() {
                 <div class="flex flex-col gap-3 text-left font-nunito">
                     <label class="text-xs font-bold text-gray-400">Link Title</label>
                     <input id="swal-title" class="swal2-input !m-0 !w-full" style="border-radius: 8px" placeholder="e.g. My Supplier Site">
+                    
                     <label class="text-xs font-bold text-gray-400">URL</label>
                     <input id="swal-url" class="swal2-input !m-0 !w-full" style="border-radius: 8px" placeholder="https://example.com">
+                    
                     <label class="text-xs font-bold text-gray-400">Description</label>
                     <textarea id="swal-desc" class="swal2-textarea !m-0 !w-full" style="border-radius: 8px" placeholder="Short description..."></textarea>
+                    
+                    <label class="text-xs font-bold text-gray-400 mt-1">Privacy & Visibility Option</label>
+                    <div class="flex flex-col gap-2.5 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <label class="flex items-center gap-2.5 cursor-pointer text-sm font-bold text-gray-800">
+                            <input type="radio" name="swal-privacy" value="private" checked class="w-4 h-4 text-brand border-gray-300 focus:ring-brand">
+                            Private Link
+                        </label>
+                        <div class="h-px bg-gray-200/60 my-0.5"></div>
+                        <label class="flex items-center gap-2.5 cursor-pointer text-sm font-bold text-gray-800">
+                            <input type="radio" name="swal-privacy" value="public" class="w-4 h-4 text-brand border-gray-300 focus:ring-brand">
+                            Public Link (Premium)
+                        </label>
+                    </div>
                 </div>
             `,
             confirmButtonText: 'Save Link',
@@ -75,26 +93,116 @@ export default function AllLinksPage() {
                 const title = document.getElementById('swal-title').value;
                 const url = document.getElementById('swal-url').value;
                 const description = document.getElementById('swal-desc').value;
+                const isPrivate = document.querySelector('input[name="swal-privacy"]:checked').value === 'private';
                 if (!title || !url || !description) {
                     Swal.showValidationMessage('Please fill all fields');
+                    return false;
                 }
-                return { title, url, description };
+                return { title, url, description, isPrivate };
             }
         });
 
         if (formValues) {
             try {
-                await api.post('/links', { ...formValues, type: 'free' });
+                await api.post('/links', formValues);
                 fetchLinks();
                 Swal.fire({
                     title: 'Saved!',
-                    text: 'Link added to the hub',
+                    text: formValues.isPrivate ? 'Private link added successfully' : 'Public premium link added successfully',
                     icon: 'success',
-                    timer: 1500,
+                    timer: 2000,
                     showConfirmButton: false
                 });
             } catch (error) {
                 Swal.fire('Error', error.response?.data?.message || 'Failed to save link', 'error');
+            }
+        }
+    };
+
+    const handleEditLink = async (link) => {
+        const { value: formValues } = await Swal.fire({
+            title: 'Edit Resource Link',
+            html: `
+                <div class="flex flex-col gap-3 text-left font-nunito">
+                    <label class="text-xs font-bold text-gray-400">Link Title</label>
+                    <input id="swal-title" class="swal2-input !m-0 !w-full" style="border-radius: 8px" placeholder="e.g. My Supplier Site" value="${link.title}">
+                    
+                    <label class="text-xs font-bold text-gray-400">URL</label>
+                    <input id="swal-url" class="swal2-input !m-0 !w-full" style="border-radius: 8px" placeholder="https://example.com" value="${link.url}">
+                    
+                    <label class="text-xs font-bold text-gray-400">Description</label>
+                    <textarea id="swal-desc" class="swal2-textarea !m-0 !w-full" style="border-radius: 8px" placeholder="Short description...">${link.description}</textarea>
+                    
+                    <label class="text-xs font-bold text-gray-400 mt-1">Privacy & Visibility Option</label>
+                    <div class="flex flex-col gap-2.5 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <label class="flex items-center gap-2.5 cursor-pointer text-sm font-bold text-gray-800">
+                            <input type="radio" name="swal-privacy" value="private" ${link.isPrivate ? 'checked' : ''} class="w-4 h-4 text-brand border-gray-300 focus:ring-brand">
+                            Private Link
+                        </label>
+                        <div class="h-px bg-gray-200/60 my-0.5"></div>
+                        <label class="flex items-center gap-2.5 cursor-pointer text-sm font-bold text-gray-800">
+                            <input type="radio" name="swal-privacy" value="public" ${!link.isPrivate ? 'checked' : ''} class="w-4 h-4 text-brand border-gray-300 focus:ring-brand">
+                            Public Link (Premium)
+                        </label>
+                    </div>
+                </div>
+            `,
+            confirmButtonText: 'Update Link',
+            confirmButtonColor: '#1e6bd6',
+            showCancelButton: true,
+            preConfirm: () => {
+                const title = document.getElementById('swal-title').value;
+                const url = document.getElementById('swal-url').value;
+                const description = document.getElementById('swal-desc').value;
+                const isPrivate = document.querySelector('input[name="swal-privacy"]:checked').value === 'private';
+                if (!title || !url || !description) {
+                    Swal.showValidationMessage('Please fill all fields');
+                }
+                return { title, url, description, isPrivate };
+            }
+        });
+
+        if (formValues) {
+            try {
+                await api.patch(`/links/${link._id}`, formValues);
+                fetchLinks();
+                Swal.fire({
+                    title: 'Updated!',
+                    text: 'Link updated successfully',
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } catch (error) {
+                Swal.fire('Error', error.response?.data?.message || 'Failed to update link', 'error');
+            }
+        }
+    };
+
+    const handleDeleteLink = async (id) => {
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "This link will be permanently deleted from your Resource Hub.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await api.delete(`/links/${id}`);
+                fetchLinks();
+                Swal.fire({
+                    title: 'Deleted!',
+                    text: 'Link deleted successfully',
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } catch (error) {
+                Swal.fire('Error', error.response?.data?.message || 'Failed to delete link', 'error');
             }
         }
     };
@@ -156,7 +264,7 @@ export default function AllLinksPage() {
                     [1,2,3,4,5,6].map(i => <div key={i} className="h-56 bg-white border border-gray-50 animate-pulse rounded-3xl" />)
                 ) : filteredLinks.length > 0 ? (
                     filteredLinks.map((link) => {
-                        const isPremium = link.type === 'premium' && !link.clientId;
+                        const isPremium = link.type === 'premium' && (!link.clientId || (user?._id && link.clientId !== user._id));
                         const locked = isPremium && !isPaid;
 
                         return (
@@ -170,7 +278,15 @@ export default function AllLinksPage() {
                             >
                                 <div className="absolute top-6 right-6">
                                     {link.clientId ? (
-                                        <span className="bg-purple-50 text-purple-600 text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border border-purple-100">User Contribution</span>
+                                        <span className={`text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border ${
+                                            link.clientId === user?._id
+                                                ? (link.isPrivate ? 'bg-gray-50 text-gray-500 border-gray-200' : 'bg-purple-50 text-purple-600 border-purple-100')
+                                                : 'bg-purple-50 text-purple-600 border-purple-100'
+                                        }`}>
+                                            {link.clientId === user?._id
+                                                ? (link.isPrivate ? 'Private' : 'My Contribution')
+                                                : 'User Contribution'}
+                                        </span>
                                     ) : (
                                         <span className={`text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-widest border ${
                                             link.type === 'premium' ? 'bg-orange-50 text-orange-500 border-orange-100' : 'bg-emerald-50 text-emerald-500 border-emerald-100'
@@ -205,14 +321,33 @@ export default function AllLinksPage() {
                                             <FiLock size={13} /> Unlock with Plan
                                         </button>
                                     ) : (
-                                        <a
-                                            href={link.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-2 text-sm font-extrabold text-brand hover:underline"
-                                        >
-                                            Access Resource <FiExternalLink size={14} />
-                                        </a>
+                                        <div className="flex items-center gap-3">
+                                            <a
+                                                href={link.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-1.5 text-sm font-extrabold text-brand hover:underline"
+                                            >
+                                                Access <FiExternalLink size={13} />
+                                            </a>
+                                            {link.clientId === user?._id && (
+                                                <div className="flex items-center gap-2 border-l border-gray-100 pl-2">
+                                                    <button
+                                                        onClick={() => handleEditLink(link)}
+                                                        className="text-[11px] font-bold text-gray-400 hover:text-blue-600 transition-colors cursor-pointer"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <span className="text-gray-200 text-[10px]">•</span>
+                                                    <button
+                                                        onClick={() => handleDeleteLink(link._id)}
+                                                        className="text-[11px] font-bold text-red-400 hover:text-red-600 transition-colors cursor-pointer"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     )}
                                     <span className={`text-[10px] font-bold uppercase italic ${locked ? 'text-orange-300' : 'text-gray-300'}`}>
                                         {locked ? 'Premium' : 'Safe Link'}

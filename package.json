@@ -6,15 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "node -e \"const{cpSync,mkdirSync}=require('fs');mkdirSync('public/imgly',{recursive:true});cpSync('node_modules/@imgly/background-removal-data/dist','public/imgly',{recursive:true});console.log('imgly model files copied to public/imgly/')\""
   },
   "dependencies": {
-    "@imgly/background-removal": "^1.7.0",
+    "@imgly/background-removal": "^1.4.5",
     "axios": "^1.15.0",
-    "framer-motion": "^12.38.0",
     "lucide-react": "^1.8.0",
     "next": "16.2.3",
-    "onnxruntime-web": "1.21.0",
+    "onnxruntime-web": "^1.17.3",
     "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -23,6 +23,7 @@
     "sweetalert2": "^11.26.24"
   },
   "devDependencies": {
+    "@imgly/background-removal-data": "^1.4.5",
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "16.2.3",

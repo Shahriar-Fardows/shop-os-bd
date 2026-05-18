@@ -19,6 +19,38 @@ const blobToDataURL = (blob) => new Promise((resolve, reject) => {
     reader.readAsDataURL(blob);
 });
 
+const dataUrlToBlob = (dataUrl) => {
+    const [header, b64] = dataUrl.split(',');
+    const mime  = header.match(/:(.*?);/)[1];
+    const bytes = atob(b64);
+    const arr   = new Uint8Array(bytes.length);
+    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+};
+
+const getImglyPublicPath = () => `${window.location.origin}/imgly/`;
+
+// Remove halo/shadow left by the AI model on light backgrounds.
+const cleanEdges = (blob) => new Promise((resolve) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+        const { naturalWidth: w, naturalHeight: h } = img;
+        const cv = document.createElement('canvas');
+        cv.width = w; cv.height = h;
+        const ctx = cv.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const id = ctx.getImageData(0, 0, w, h);
+        const px = id.data;
+        for (let i = 0; i < px.length; i += 4) {
+            if (px[i + 3] < 30) px[i + 3] = 0;
+        }
+        ctx.putImageData(id, 0, 0);
+        cv.toBlob((b) => { URL.revokeObjectURL(url); resolve(b); }, 'image/png');
+    };
+    img.src = url;
+});
+
 const loadImage = (src) => new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -142,7 +174,9 @@ export default function ImageEditPage() {
         setIsProcessing(true);
         setProgress(0);
         try {
-            const blob = await removeBackground(currentImage, {
+            const inputBlob = dataUrlToBlob(currentImage);
+            const rawBlob = await removeBackground(inputBlob, {
+                publicPath: getImglyPublicPath(),
                 progress: (...args) => {
                     if (args.length >= 3 && typeof args[2] === 'number' && args[2] > 0) {
                         setProgress(Math.round((args[1] / args[2]) * 100));
@@ -151,8 +185,9 @@ export default function ImageEditPage() {
                     }
                 },
                 debug: false,
-                model: 'medium'
+                model: 'medium',
             });
+            const blob = await cleanEdges(rawBlob);
             const dataUrl = await blobToDataURL(blob);
             pushImage(dataUrl);
             setActiveTool(null);
@@ -1199,7 +1234,6 @@ export default function ImageEditPage() {
                                     <button
                                         key={t.id}
                                         onClick={() => {
-                                            if (isBgRemove) { window.open('https://www.remove.bg/', '_blank'); return; }
                                             setActiveTool(t.id);
                                         }}
                                         disabled={isProcessing}
@@ -1211,7 +1245,7 @@ export default function ImageEditPage() {
                                     >
                                         <Icon size={18} className={isActive ? 'text-[#1e6bd6]' : 'text-gray-400'} />
                                         <span>{t.label}</span>
-                                        {isBgRemove && <span className="ml-auto text-[9px] font-black bg-blue-50 text-[#1e6bd6] px-1.5 py-0.5 rounded uppercase tracking-wider border border-blue-100">↗</span>}
+                                        {isBgRemove && <span className="ml-auto text-[9px] font-black bg-blue-50 text-[#1e6bd6] px-1.5 py-0.5 rounded uppercase tracking-wider border border-blue-100">AI</span>}
                                     </button>
                                 );
                             })}

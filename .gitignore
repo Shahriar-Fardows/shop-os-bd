@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# AI model files (212MB, copy from node_modules/@imgly/background-removal-data/dist/)
+/public/imgly/
